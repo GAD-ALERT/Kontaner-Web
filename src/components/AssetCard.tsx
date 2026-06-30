@@ -1,30 +1,77 @@
-import { Bookmark } from 'lucide-react';
+import { Bookmark, Crown, Download, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useState, type MouseEvent } from 'react';
 import type { Asset } from '../types';
+import { useFavorites, useLoginGate } from '../stores/favorites';
+import { useAuth } from '../stores/auth';
 
 export type AssetCardSize = 'normal' | 'large' | 'small';
 
 interface AssetCardProps {
   asset: Asset;
   size?: AssetCardSize;
-  onOpen?: (asset: Asset) => void;
 }
 
-export function AssetCard({ asset, size = 'normal', onOpen }: AssetCardProps) {
+function formatCount(n: number | undefined): string {
+  if (!n) return '0';
+  if (n < 1000) return String(n);
+  if (n < 10000) return `${(n / 1000).toFixed(1)}k`;
+  return `${Math.round(n / 1000)}k`;
+}
+
+export function AssetCard({ asset, size = 'normal' }: AssetCardProps) {
+  const isAuthed = useAuth((s) => s.user !== null);
+  const isFavorite = useFavorites((s) => s.ids.includes(asset.id));
+  const toggle = useFavorites((s) => s.toggle);
+  const showGate = useLoginGate((s) => s.show);
+  const [imgLoaded, setImgLoaded] = useState<boolean>(false);
+
+  const handleBookmark = (event: MouseEvent<HTMLButtonElement>): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!isAuthed) {
+      showGate('Sign in to save assets');
+      return;
+    }
+    toggle(asset.id);
+  };
+
   return (
-    <article
+    <Link
       className={`asset-card ${size}`}
-      onClick={() => onOpen?.(asset)}
-      tabIndex={0}
+      to={`/asset/${asset.id}`}
+      aria-label={asset.displayTitle}
     >
       <div className={`asset-visual ${asset.visual}`}>
+        {asset.src && (
+          <img
+            className={imgLoaded ? 'asset-img loaded' : 'asset-img'}
+            src={asset.src}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            onLoad={() => setImgLoaded(true)}
+          />
+        )}
         <span className="asset-type">{asset.type}</span>
-        <button className="bookmark-button" type="button" aria-label="Save asset">
-          <Bookmark size={20} />
+        {asset.premium ? (
+          <span className="asset-premium" aria-label="Premium asset">
+            <Crown size={14} />
+            Premium
+          </span>
+        ) : null}
+        <button
+          className={isFavorite ? 'bookmark-button active' : 'bookmark-button'}
+          type="button"
+          aria-label={isFavorite ? 'Remove from saved' : 'Save asset'}
+          onClick={handleBookmark}
+        >
+          <Bookmark size={20} fill={isFavorite ? 'currentColor' : 'none'} />
         </button>
       </div>
       <div className="asset-card-body">
         <div className="asset-title-row">
-          <h3>{asset.title}</h3>
+          <h3>{asset.displayTitle}</h3>
         </div>
         <p>
           {asset.date} · {asset.size}
@@ -39,8 +86,20 @@ export function AssetCard({ asset, size = 'normal', onOpen }: AssetCardProps) {
             <span className="tag muted">+{asset.tags.length - 3}</span>
           ) : null}
         </div>
+        {(asset.likes ?? asset.downloads) !== undefined && (
+          <div className="asset-stats">
+            <span title="Likes">
+              <Heart size={14} />
+              {formatCount(asset.likes)}
+            </span>
+            <span title="Downloads">
+              <Download size={14} />
+              {formatCount(asset.downloads)}
+            </span>
+          </div>
+        )}
       </div>
-    </article>
+    </Link>
   );
 }
 
@@ -49,5 +108,15 @@ interface MiniAssetProps {
 }
 
 export function MiniAsset({ asset }: MiniAssetProps) {
-  return <div className={`mini-asset ${asset.visual}`} aria-label={asset.displayTitle} />;
+  return (
+    <Link
+      to={`/asset/${asset.id}`}
+      className={`mini-asset ${asset.visual}`}
+      aria-label={asset.displayTitle}
+    >
+      {asset.src && (
+        <img src={asset.src} alt="" loading="lazy" decoding="async" />
+      )}
+    </Link>
+  );
 }

@@ -1,6 +1,6 @@
 /**
  * Barrel re-exports for the shared types layer.
- * Consumers should `import { Asset, NavigateFn } from '../types';`.
+ * Consumers should `import { Asset, Route } from '../types';`.
  */
 
 export type {
@@ -11,8 +11,9 @@ export type {
   CollectionVisualClass,
   Collection,
   AiTag,
+  Creator,
 } from './asset.types';
 
-export type { Route, NavigateFn } from './navigation.types';
+export type { Route } from './navigation.types';
 
 export type { UploadResponse, ApiErrorPayload } from './api.types';

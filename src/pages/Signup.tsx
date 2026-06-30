@@ -1,37 +1,34 @@
 import { Archive, CheckCircle2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../stores/auth';
 
-interface LocationState {
-  from?: string;
-}
+const roles = [
+  'Visual Designer',
+  'Photographer',
+  'Illustrator',
+  'Creative Director',
+  'Studio',
+  'Student',
+] as const;
 
-export function Login() {
+export function Signup() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const login = useAuth((s) => s.login);
-  const loginAsGuest = useAuth((s) => s.loginAsGuest);
-
-  const intended = (location.state as LocationState | null)?.from ?? '/';
-
+  const signup = useAuth((s) => s.signup);
+  const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [role, setRole] = useState<string>(roles[0]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
-    login(email || 'ama.serwaa@kontaner.studio');
-    navigate(intended);
-  };
-
-  const handleGuest = (): void => {
-    loginAsGuest();
-    navigate(intended);
+    signup({ name, email, role });
+    navigate('/');
   };
 
   return (
     <main className="login-page">
-      <section className="login-visual">
+      <section className="login-visual signup-visual">
         <div className="login-overlay">
           <div className="login-brand">
             <span>
@@ -39,30 +36,44 @@ export function Login() {
             </span>
             <strong>Kontaner</strong>
           </div>
-          <h1>Your creative library, intelligently organised.</h1>
+          <h1>Build your creative library, one upload at a time.</h1>
           <ul>
             <li>
               <CheckCircle2 size={14} />
-              Auto-tagged in seconds
+              Free 20 GB to start
             </li>
             <li>
               <CheckCircle2 size={14} />
-              Search in plain English
+              AI tags every upload in seconds
             </li>
             <li>
               <CheckCircle2 size={14} />
-              Your library, organised intelligently
+              Built for the Ghanaian creative scene
+            </li>
+            <li>
+              <CheckCircle2 size={14} />
+              No credit card required
             </li>
           </ul>
         </div>
       </section>
       <section className="login-panel">
         <form className="login-form" onSubmit={handleSubmit}>
-          <p className="eyebrow">Welcome back</p>
-          <h2>Sign in to Kontaner</h2>
+          <p className="eyebrow">Get started free</p>
+          <h2>Create your Kontaner account</h2>
+          <label>
+            Full Name
+            <input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ama Serwaa"
+            />
+          </label>
           <label>
             Email Address
             <input
+              required
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -70,29 +81,29 @@ export function Login() {
             />
           </label>
           <label>
-            <span className="label-row">
-              Password
-              <Link to="/forgot">Forgot password?</Link>
-            </span>
+            Password
             <input
+              required
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              minLength={6}
             />
           </label>
+          <label>
+            I work as
+            <select value={role} onChange={(e) => setRole(e.target.value)}>
+              {roles.map((r) => (
+                <option key={r}>{r}</option>
+              ))}
+            </select>
+          </label>
           <button className="primary-button login-submit" type="submit">
-            Sign in
-          </button>
-          <button
-            className="login-guest"
-            type="button"
-            onClick={handleGuest}
-          >
-            Continue as guest
+            Create account
           </button>
           <p className="signup-copy">
-            New to Kontaner? <Link to="/signup">Create an account</Link>
+            Already have one? <Link to="/login">Sign in</Link>
           </p>
         </form>
       </section>

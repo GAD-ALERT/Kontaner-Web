@@ -1,0 +1,197 @@
+/* =========================================================
+   Day 2 additions — Skeleton loaders, library list view,
+   sort menu popover, empty states.
+   ========================================================= */
+
+/* ---- Skeleton shimmer ---- */
+@keyframes skeleton-pulse {
+  0%   { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.skeleton,
+.skeleton-card .skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--panel-muted) 0%,
+    var(--panel-soft) 50%,
+    var(--panel-muted) 100%
+  );
+  background-size: 200px 100%;
+  background-repeat: no-repeat;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.skeleton-card .skeleton:first-child {
+  border-radius: 0;
+}
+.skeleton-card-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.skeleton-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.masonry-results.loading,
+.library-grid.loading {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 22px;
+}
+
+/* ---- Sort menu popover ---- */
+.sort-menu {
+  position: relative;
+}
+.sort-menu-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 220px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 18px 38px rgba(27, 48, 38, 0.16);
+  padding: 6px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+.sort-menu-pop button {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+}
+.sort-menu-pop button.active {
+  background: var(--green-soft);
+  color: var(--green);
+}
+.sort-menu-pop button:hover {
+  background: var(--panel-soft);
+}
+
+/* ---- Library list view ---- */
+.library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.library-list-row {
+  display: grid;
+  grid-template-columns: 96px 1.4fr 1fr 100px;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  transition: border-color 0.18s ease, transform 0.18s ease;
+}
+.library-list-row:hover {
+  border-color: var(--green);
+  transform: translateY(-1px);
+}
+.library-list-thumb {
+  width: 96px;
+  height: 64px;
+  border-radius: 10px;
+}
+.library-list-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.library-list-meta strong {
+  font-size: 15px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.library-list-meta span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.library-list-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.library-list-open {
+  justify-self: end;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.library-list-open:hover {
+  background: var(--green);
+  color: white;
+}
+
+/* ---- Library empty state ---- */
+.library-empty {
+  text-align: center;
+  padding: 80px 24px;
+  background: var(--panel-soft);
+  border: 1px dashed var(--line-strong);
+  border-radius: 18px;
+}
+.library-empty h2 {
+  font-size: 22px;
+  margin: 0 0 6px;
+}
+.library-empty p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ---- Search tabs hover + filter token ---- */
+.search-tabs button {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.search-tabs button[aria-selected='true'] {
+  color: var(--green);
+}
+
+/* ---- Responsive: list view collapses to stacked rows ---- */
+@media (max-width: 720px) {
+  .library-list-row {
+    grid-template-columns: 72px 1fr;
+    grid-template-areas:
+      'thumb meta'
+      'tags  tags'
+      'open  open';
+    gap: 10px;
+  }
+  .library-list-thumb { grid-area: thumb; width: 72px; height: 56px; }
+  .library-list-meta { grid-area: meta; }
+  .library-list-tags { grid-area: tags; }
+  .library-list-open { grid-area: open; justify-self: start; }
+}
