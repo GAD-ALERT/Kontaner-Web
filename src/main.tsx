@@ -1,7 +1,15 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App';
+import { RouterProvider } from 'react-router-dom';
+import { router } from './routes/router';
 import './styles.css';
+import './styles-day1.css';
+import './styles-day2.css';
+import './styles-day3.css';
+import './styles-day4.css';
+import './styles-day5.css';
+import './styles-day6.css';
+import './styles-day8.css';
 
 const rootElement: HTMLElement | null = document.getElementById('root');
 
@@ -14,6 +22,6 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <App />
+    <RouterProvider router={router} />
   </StrictMode>,
 );

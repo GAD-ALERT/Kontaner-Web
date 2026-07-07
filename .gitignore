@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Windows / Google Drive sync metadata
+desktop.ini
+Thumbs.db
+ehthumbs.db
+

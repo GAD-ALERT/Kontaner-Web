@@ -37,6 +37,8 @@ export type CollectionVisualClass =
   | 'collection-tourism'
   | 'collection-urban';
 
+export type AspectRatio = 'portrait' | 'landscape' | 'square';
+
 /** A single uploaded creative asset. */
 export interface Asset {
   id: string;
@@ -49,6 +51,12 @@ export interface Asset {
   owner: string;
   visual: VisualClass;
   tags: string[];
+  premium?: boolean;
+  likes?: number;
+  downloads?: number;
+  aspectRatio?: AspectRatio;
+  /** Public-relative path to the bundled image. Populated in Day 3. */
+  src?: string;
 }
 
 /** A user-curated set of assets. */
@@ -58,6 +66,16 @@ export interface Collection {
   assetCount: number;
   updated: string;
   visual: CollectionVisualClass;
+}
+
+/** A featured creator on the discover page. */
+export interface Creator {
+  id: string;
+  name: string;
+  handle: string;
+  assetCount: number;
+  initials: string;
+  accent: 'green' | 'blue' | 'gold' | 'red';
 }
 
 /** An AI-generated descriptive tag. */

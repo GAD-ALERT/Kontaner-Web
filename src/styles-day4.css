@@ -1,0 +1,156 @@
+/* =========================================================
+   Day 4 — Motion + hero magic.
+   CSS-side companion to motion/react. Adds:
+     · Ken-Burns hero background image
+     · Hover lifts on cards/categories
+     · Active-state tactile press
+     · Reduced-motion overrides
+   ========================================================= */
+
+/* ---- Ken-Burns hero background ---- */
+.hero-v2 {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.hero-v2-bg {
+  position: absolute;
+  inset: -6%;
+  background:
+    linear-gradient(180deg, rgba(0, 105, 76, 0.86) 0%, rgba(0, 60, 44, 0.92) 100%),
+    url('https://picsum.photos/seed/kontaner-hero/1600/900') center/cover no-repeat;
+  z-index: -1;
+  filter: saturate(0.9) contrast(1.05);
+  animation: ken-burns 22s ease-in-out infinite alternate;
+}
+@keyframes ken-burns {
+  0%   { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.12) translate(-1.2%, 1.6%); }
+}
+
+/* Subtle vignette for hero text legibility */
+.hero-v2::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(0, 30, 22, 0.35) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+.hero-v2-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Card hover lift ---- */
+.asset-card {
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  will-change: transform;
+}
+.asset-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 32px rgba(20, 40, 30, 0.16);
+}
+.asset-card:active {
+  transform: translateY(-2px);
+  transition-duration: 0.08s;
+}
+
+/* Trending card lift is bigger — they're the hero of the page */
+.trending-card {
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+.trending-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 44px rgba(20, 40, 30, 0.22);
+}
+
+/* Category mega cards — soft press */
+.category-mega-card {
+  transition: transform 0.18s ease, border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.category-mega-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 26px rgba(20, 40, 30, 0.14);
+}
+.category-mega-card:active {
+  transform: translateY(-1px);
+}
+
+/* Result card lift */
+.result-card {
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.result-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(20, 40, 30, 0.16);
+}
+
+/* Collection strip cards */
+.collection-strip-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.collection-strip-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 36px rgba(20, 40, 30, 0.18);
+}
+
+/* Trending tag chips — soft pulse on hover */
+.hero-v2-trending a {
+  transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+.hero-v2-trending a:hover {
+  transform: translateY(-1px);
+}
+
+/* Primary button micro-press */
+.primary-button,
+.outline-button,
+.secondary-button,
+.hero-v2-search-btn {
+  transition: transform 0.12s ease, background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.primary-button:active,
+.outline-button:active,
+.secondary-button:active,
+.hero-v2-search-btn:active {
+  transform: translateY(1px);
+  transition-duration: 0.06s;
+}
+
+/* Bookmark heart-tick (CSS-only on active state) */
+.bookmark-button {
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+.bookmark-button.active {
+  color: var(--green);
+  animation: bookmark-pop 0.32s ease;
+}
+@keyframes bookmark-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.28); }
+  100% { transform: scale(1); }
+}
+
+/* ---- Reduced-motion override ---- */
+@media (prefers-reduced-motion: reduce) {
+  .hero-v2-bg,
+  .asset-card,
+  .trending-card,
+  .category-mega-card,
+  .result-card,
+  .collection-strip-card,
+  .bookmark-button {
+    animation: none !important;
+    transition: none !important;
+  }
+  .hero-v2-bg {
+    transform: none !important;
+  }
+}

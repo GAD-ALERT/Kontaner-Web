@@ -1,10 +1,10 @@
 /**
- * Hash-based router types.
+ * Canonical app routes. Free-form strings are also accepted because
+ * react-router pages may construct routes with params/query
+ * (e.g. `/asset/kente-market-portrait`, `/search?q=kente`).
  */
-
-/** Canonical app routes. Free-form strings are also accepted to allow
- *  query parameters (e.g. `/search?query=kente`). */
 export type Route =
+  | '/'
   | '/discover'
   | '/library'
   | '/collections'
@@ -13,7 +13,6 @@ export type Route =
   | '/asset'
   | '/settings'
   | '/login'
+  | '/signup'
+  | '/forgot'
   | (string & {});
-
-/** Imperative navigation function passed down via props. */
-export type NavigateFn = (route: Route) => void;

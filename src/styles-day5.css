@@ -1,0 +1,122 @@
+/* =========================================================
+   Day 5 — Natural-language search.
+   Refinement chips, AI-pulse loader, match score badges,
+   matched-tag highlighting on result cards.
+   ========================================================= */
+
+/* ---- AI-thinking loader ---- */
+.search-loading {
+  margin-top: 18px;
+}
+.ai-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: linear-gradient(
+    100deg,
+    var(--green-soft) 0%,
+    #d8f0e3 50%,
+    var(--green-soft) 100%
+  );
+  background-size: 200% 100%;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin-bottom: 20px;
+  animation: ai-pulse-bg 1.6s linear infinite;
+}
+.ai-pulse svg {
+  animation: ai-pulse-spark 1.2s ease-in-out infinite;
+}
+@keyframes ai-pulse-bg {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes ai-pulse-spark {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+  50%      { transform: scale(1.18) rotate(8deg); opacity: 1; }
+}
+
+/* ---- Search intro sub-line ---- */
+.search-intro-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 6px;
+}
+.search-intro-line svg {
+  color: var(--green);
+}
+
+/* ---- Refine chip row ---- */
+.refine-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 6px;
+}
+.refine-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-right: 4px;
+}
+.refine-row a {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+.refine-row a:hover {
+  background: var(--green-soft);
+  border-color: var(--green);
+  color: var(--green);
+  transform: translateY(-1px);
+}
+
+/* ---- Match score badge on result card thumb ---- */
+.result-visual {
+  position: relative;
+}
+.match-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(0, 105, 76, 0.94);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(4px);
+}
+.match-badge svg {
+  color: #ffe07a;
+}
+
+/* ---- Matched tag highlight ---- */
+.tag.matched {
+  background: var(--green-soft);
+  color: var(--green);
+  border: 1px solid var(--green);
+  font-weight: 700;
+}
