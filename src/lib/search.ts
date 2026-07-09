@@ -83,13 +83,9 @@ const SYNONYMS: Record<string, readonly string[]> = {
   photo: ['photograph', 'image', 'picture', 'shot'],
   photograph: ['photo', 'image', 'picture'],
   picture: ['photo', 'image'],
-  video: ['footage', 'clip', 'film', 'motion'],
-  footage: ['video', 'clip'],
   illustration: ['graphic', 'vector', 'drawing', 'art'],
   graphic: ['illustration', 'vector', 'art', 'design'],
   vector: ['illustration', 'graphic', 'svg'],
-  '3d': ['model', 'mesh', 'render', 'sculpt'],
-  model: ['3d', 'mesh', 'render'],
 };
 
 const TYPE_KEYWORDS: Record<string, AssetType> = {
@@ -97,16 +93,10 @@ const TYPE_KEYWORDS: Record<string, AssetType> = {
   photograph: 'PHOTO',
   picture: 'PHOTO',
   image: 'PHOTO',
-  video: 'VIDEO',
-  footage: 'VIDEO',
-  clip: 'VIDEO',
-  illustration: 'GRAPHIC',
-  graphic: 'GRAPHIC',
-  vector: 'GRAPHIC',
-  drawing: 'GRAPHIC',
-  '3d': '3D',
-  model: '3D',
-  mesh: '3D',
+  illustration: 'ILLUSTRATION',
+  graphic: 'ILLUSTRATION',
+  vector: 'ILLUSTRATION',
+  drawing: 'ILLUSTRATION',
 };
 
 function tokenise(query: string): string[] {

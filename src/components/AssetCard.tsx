@@ -1,9 +1,9 @@
-import { Bookmark, Crown, Download, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, type MouseEvent } from 'react';
 import type { Asset } from '../types';
 import { useFavorites, useLoginGate } from '../stores/favorites';
 import { useAuth } from '../stores/auth';
+import { Icon } from './Icon';
 
 export type AssetCardSize = 'normal' | 'large' | 'small';
 
@@ -53,20 +53,13 @@ export function AssetCard({ asset, size = 'normal' }: AssetCardProps) {
             onLoad={() => setImgLoaded(true)}
           />
         )}
-        <span className="asset-type">{asset.type}</span>
-        {asset.premium ? (
-          <span className="asset-premium" aria-label="Premium asset">
-            <Crown size={14} />
-            Premium
-          </span>
-        ) : null}
         <button
           className={isFavorite ? 'bookmark-button active' : 'bookmark-button'}
           type="button"
           aria-label={isFavorite ? 'Remove from saved' : 'Save asset'}
           onClick={handleBookmark}
         >
-          <Bookmark size={20} fill={isFavorite ? 'currentColor' : 'none'} />
+          <Icon name="bookmark" size={20} filled={isFavorite} />
         </button>
       </div>
       <div className="asset-card-body">
@@ -89,11 +82,11 @@ export function AssetCard({ asset, size = 'normal' }: AssetCardProps) {
         {(asset.likes ?? asset.downloads) !== undefined && (
           <div className="asset-stats">
             <span title="Likes">
-              <Heart size={14} />
+              <Icon name="favorite" size={16} />
               {formatCount(asset.likes)}
             </span>
             <span title="Downloads">
-              <Download size={14} />
+              <Icon name="download" size={16} />
               {formatCount(asset.downloads)}
             </span>
           </div>

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { X } from 'lucide-react';
 import { useEffect } from 'react';
+import { Icon } from './Icon';
 
 interface Props {
   open: boolean;
@@ -43,7 +43,7 @@ export function Lightbox({ open, src, alt, onClose }: Props) {
             onClick={onClose}
             aria-label="Close preview"
           >
-            <X size={24} />
+            <Icon name="close" size={24} />
           </button>
           <motion.img
             src={src}

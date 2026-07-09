@@ -291,26 +291,34 @@
   cursor: pointer;
 }
 .hero-v2-search-btn:hover { background: var(--green-dark); }
-.hero-v2-trending {
+/* Rotating example prompt under the hero search */
+.hero-v2-example {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  align-items: baseline;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.78);
+  gap: 10px;
+  min-height: 28px;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 14px;
 }
-.hero-v2-trending a {
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 13px;
-  font-weight: 500;
-  text-decoration: none;
+.hero-v2-example > span {
+  flex-shrink: 0;
 }
-.hero-v2-trending a:hover { background: rgba(255, 255, 255, 0.16); }
+.hero-v2-example button {
+  background: none;
+  border: 0;
+  padding: 0 0 2px;
+  color: white;
+  font: inherit;
+  font-style: italic;
+  cursor: pointer;
+  text-align: left;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.45);
+  transition: border-color 0.18s ease;
+}
+.hero-v2-example button:hover {
+  border-bottom-color: white;
+}
 .hero-v2-stats {
   display: flex;
   gap: 56px;
@@ -389,7 +397,7 @@
 /* ---- Discover sections ---- */
 .discover-section {
   width: min(1280px, calc(100% - 96px));
-  margin: 80px auto 0;
+  margin: 40px auto 0;
 }
 .discover-section-head {
   display: flex;
@@ -469,20 +477,6 @@
   font-size: 12px;
   color: rgba(255, 255, 255, 0.78);
 }
-.trending-premium {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  background: var(--gold);
-  color: #2c1f00;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 9px;
-  border-radius: 999px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 /* ---- Collections strip ---- */
 .collection-strip {
   display: grid;
@@ -547,8 +541,6 @@
   color: var(--ink);
   box-shadow: 0 4px 10px rgba(8, 23, 17, 0.08);
 }
-.license-toggle-crown { color: var(--gold); }
-
 /* ---- Browse grid ---- */
 .browse-grid {
   display: grid;
@@ -582,22 +574,6 @@
 .asset-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 40px rgba(15, 49, 36, 0.12);
-}
-.asset-premium {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  background: var(--gold);
-  color: #2c1f00;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 .bookmark-button.active {
   color: var(--green);

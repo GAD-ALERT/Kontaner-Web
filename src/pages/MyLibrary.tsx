@@ -1,8 +1,8 @@
-import { ChevronDown, Grid2X2, List, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { AssetCard } from '../components/AssetCard';
+import { Icon } from '../components/Icon';
 import { SkeletonAssetGrid } from '../components/Skeleton';
 import { assets } from '../data/assets';
 import { useFavorites } from '../stores/favorites';
@@ -11,24 +11,20 @@ import { useFakeLoad } from '../hooks/useFakeLoad';
 import { gridContainer, gridItem } from '../lib/motion';
 import type { Asset, AssetType } from '../types';
 
-type LibraryFilter = 'All' | 'Photos' | 'Videos' | 'Illustrations' | '3D' | 'Recent';
+type LibraryFilter = 'All' | 'Photos' | 'Illustrations' | 'Recent';
 type SortKey = 'date' | 'name' | 'popular';
 type ViewMode = 'grid' | 'list';
 
 const filters: readonly LibraryFilter[] = [
   'All',
   'Photos',
-  'Videos',
   'Illustrations',
-  '3D',
   'Recent',
 ] as const;
 
 const filterToType: Partial<Record<LibraryFilter, AssetType>> = {
   Photos: 'PHOTO',
-  Videos: 'VIDEO',
-  Illustrations: 'GRAPHIC',
-  '3D': '3D',
+  Illustrations: 'ILLUSTRATION',
 };
 
 const sortLabels: Record<SortKey, string> = {
@@ -77,7 +73,7 @@ export function MyLibrary() {
         <div>
           <h1>My Library</h1>
           <p>
-            <Sparkles size={18} />
+            <Icon name="auto_awesome" size={20} />
             {library.length} assets · Auto-tagged with AI
           </p>
         </div>
@@ -117,7 +113,7 @@ export function MyLibrary() {
               aria-expanded={sortOpen}
             >
               {sortLabels[sort]}
-              <ChevronDown size={17} />
+              <Icon name="expand_more" size={20} />
             </button>
             {sortOpen && (
               <div className="sort-menu-pop" role="menu">
@@ -144,7 +140,7 @@ export function MyLibrary() {
               type="button"
               onClick={() => setView('grid')}
             >
-              <Grid2X2 size={18} />
+              <Icon name="grid_view" size={20} filled={view === 'grid'} />
             </button>
             <button
               className={view === 'list' ? 'active' : ''}
@@ -152,7 +148,7 @@ export function MyLibrary() {
               type="button"
               onClick={() => setView('list')}
             >
-              <List size={18} />
+              <Icon name="view_list" size={20} filled={view === 'list'} />
             </button>
           </div>
         </div>
@@ -210,7 +206,7 @@ export function MyLibrary() {
       {!loading && library.length > 0 && (
         <button className="secondary-button load-more-centered" type="button">
           Load more assets
-          <ChevronDown size={19} />
+          <Icon name="expand_more" size={20} />
         </button>
       )}
     </div>

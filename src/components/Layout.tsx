@@ -1,4 +1,3 @@
-import { Bell, ChevronDown, LogOut, Search, Settings, User } from 'lucide-react';
 import {
   useEffect,
   useRef,
@@ -13,6 +12,7 @@ import { useLoginGate } from '../stores/favorites';
 import { useNotifications } from '../stores/notifications';
 import { LoginGate } from './LoginGate';
 import { NotificationsPanel } from './NotificationsPanel';
+import { Icon } from './Icon';
 
 interface NavItem {
   label: string;
@@ -122,7 +122,7 @@ function Header() {
               }
             />
             <button aria-label="Search" type="submit">
-              <Search size={21} />
+              <Icon name="search" size={20} />
             </button>
           </form>
         )}
@@ -146,7 +146,7 @@ function Header() {
                 type="button"
                 onClick={() => setNotifOpen((v) => !v)}
               >
-                <Bell size={21} />
+                <Icon name="notifications" size={20} />
                 {unread > 0 && (
                   <span className="notif-badge" aria-hidden="true">
                     {unread > 9 ? '9+' : unread}
@@ -172,8 +172,11 @@ function Header() {
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-label="Account menu"
               >
-                {user.avatarInitials}
-                <ChevronDown size={14} />
+                {user.avatarUrl ? (
+                  <img className="avatar-photo" src={user.avatarUrl} alt="" />
+                ) : (
+                  <Icon name="account_circle" size={24} />
+                )}
               </button>
               {menuOpen && (
                 <div className="avatar-menu" role="menu">
@@ -182,15 +185,15 @@ function Header() {
                     <span>{user.email}</span>
                   </div>
                   <Link to="/settings" onClick={() => setMenuOpen(false)}>
-                    <User size={16} />
+                    <Icon name="person" size={16} />
                     Profile
                   </Link>
                   <Link to="/settings" onClick={() => setMenuOpen(false)}>
-                    <Settings size={16} />
+                    <Icon name="settings" size={16} />
                     Settings
                   </Link>
                   <button type="button" onClick={handleLogout}>
-                    <LogOut size={16} />
+                    <Icon name="logout" size={16} />
                     Sign out
                   </button>
                 </div>

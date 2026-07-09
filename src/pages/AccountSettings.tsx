@@ -1,17 +1,6 @@
-import {
-  Bell,
-  Camera,
-  Cloud,
-  CreditCard,
-  Edit3,
-  MapPin,
-  ShieldCheck,
-  UserRound,
-  WalletCards,
-  type LucideIcon,
-} from 'lucide-react';
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { motion } from 'motion/react';
+import { Icon } from '../components/Icon';
 import { useAuth } from '../stores/auth';
 import { useLibrary } from '../stores/library';
 import { useFavorites } from '../stores/favorites';
@@ -24,15 +13,15 @@ type SettingsTab = 'profile' | 'account' | 'notifications' | 'storage' | 'billin
 interface SettingsItem {
   id: SettingsTab;
   label: string;
-  icon: LucideIcon;
+  icon: string;
 }
 
 const items: readonly SettingsItem[] = [
-  { id: 'profile', label: 'Profile', icon: UserRound },
-  { id: 'account', label: 'Account', icon: WalletCards },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'storage', label: 'Storage', icon: Cloud },
-  { id: 'billing', label: 'Billing', icon: CreditCard },
+  { id: 'profile', label: 'Profile', icon: 'person' },
+  { id: 'account', label: 'Account', icon: 'wallet' },
+  { id: 'notifications', label: 'Notifications', icon: 'notifications' },
+  { id: 'storage', label: 'Storage', icon: 'cloud' },
+  { id: 'billing', label: 'Billing', icon: 'credit_card' },
 ] as const;
 
 export function AccountSettings() {
@@ -101,14 +90,14 @@ export function AccountSettings() {
       <aside className="settings-sidebar">
         <section className="settings-menu">
           <h2>Settings</h2>
-          {items.map(({ id, label, icon: Icon }) => (
+          {items.map(({ id, label, icon }) => (
             <button
               key={id}
               className={tab === id ? 'active' : ''}
               type="button"
               onClick={() => setTab(id)}
             >
-              <Icon size={22} />
+              <Icon name={icon} size={20} filled={tab === id} />
               {label}
             </button>
           ))}
@@ -141,7 +130,7 @@ export function AccountSettings() {
                     {avatarUrl ? (
                       <img src={avatarUrl} alt="Profile" />
                     ) : (
-                      <span>{user?.avatarInitials ?? 'AM'}</span>
+                      <Icon name="person" size={56} filled />
                     )}
                   </div>
                   <button
@@ -149,7 +138,7 @@ export function AccountSettings() {
                     type="button"
                     onClick={() => fileRef.current?.click()}
                   >
-                    <Edit3 size={20} />
+                    <Icon name="edit" size={20} />
                   </button>
                   <input
                     ref={fileRef}
@@ -197,7 +186,7 @@ export function AccountSettings() {
                   <label className="location-field">
                     Location
                     <span>
-                      <MapPin size={18} />
+                      <Icon name="location_on" size={20} />
                       <input
                         value={location}
                         onChange={(e) => markDirty(setLocation)(e.target.value)}
@@ -233,7 +222,7 @@ export function AccountSettings() {
                     <dt>Two-factor auth</dt>
                     <dd>
                       <span className="status-pill ok">
-                        <ShieldCheck size={13} /> Enabled
+                        <Icon name="verified_user" size={16} /> Enabled
                       </span>
                     </dd>
                   </div>
@@ -276,7 +265,7 @@ export function AccountSettings() {
               <section className="storage-card">
                 <div className="section-heading">
                   <h2>
-                    <Cloud size={24} />
+                    <Icon name="cloud" size={24} />
                     Storage Overview
                   </h2>
                   <button
@@ -295,27 +284,26 @@ export function AccountSettings() {
                   <div className="storage-details">
                     <div className="usage-bar">
                       <span className="images" />
-                      <span className="videos" />
-                      <span className="docs" />
+                      <span className="illustrations" />
                       <span className="other" />
                     </div>
                     <div className="legend">
                       <span>
                         <i className="images" />
-                        Images (2.1GB)
+                        Photos (2.6GB)
                       </span>
                       <span>
-                        <i className="videos" />
-                        Videos (0.8GB)
+                        <i className="illustrations" />
+                        Illustrations (0.5GB)
                       </span>
                       <span>
-                        <i className="docs" />
-                        Documents (0.3GB)
+                        <i className="other" />
+                        Other (0.1GB)
                       </span>
                     </div>
                     <h3>Activity summary</h3>
                     <article className="file-row">
-                      <Camera size={22} />
+                      <Icon name="cloud_upload" size={24} />
                       <div>
                         <strong>{uploads.length} uploads</strong>
                         <p>{downloads.length} downloads this period</p>
@@ -323,7 +311,7 @@ export function AccountSettings() {
                       <span>{collections.length} collections</span>
                     </article>
                     <article className="file-row">
-                      <Camera size={22} />
+                      <Icon name="bookmark" size={24} />
                       <div>
                         <strong>{favorites.length} favorited assets</strong>
                         <p>Backed up across all devices</p>
@@ -343,7 +331,7 @@ export function AccountSettings() {
                 <div className="plan-card">
                   <div>
                     <strong>Studio plan</strong>
-                    <p>20 GB storage · Premium downloads · Team seat</p>
+                    <p>20 GB storage · Unlimited downloads · Team seat</p>
                   </div>
                   <span className="plan-price">GH₵ 99 / month</span>
                 </div>

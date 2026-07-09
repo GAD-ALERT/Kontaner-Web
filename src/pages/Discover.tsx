@@ -1,19 +1,4 @@
 import {
-  ArrowRight,
-  Box,
-  Camera,
-  ChevronRight,
-  Film,
-  Grid2X2,
-  Image as ImageIcon,
-  Palette,
-  Search,
-  Sparkles,
-  TrendingUp,
-  Users,
-  type LucideIcon,
-} from 'lucide-react';
-import {
   useEffect,
   useMemo,
   useState,
@@ -21,48 +6,43 @@ import {
   type FormEvent,
 } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { AssetCard } from '../components/AssetCard';
+import { Icon } from '../components/Icon';
 import { SkeletonAssetGrid } from '../components/Skeleton';
 import { assets, collections, featuredCreators } from '../data/assets';
 import { useFakeLoad } from '../hooks/useFakeLoad';
 import { gridContainer, gridItem, heroItem } from '../lib/motion';
 import type { AssetType } from '../types';
 
-interface CategoryCard {
-  label: string;
-  icon: LucideIcon;
-  count: string;
-  filter: AssetType | 'ALL';
-  accent: 'green' | 'blue' | 'gold' | 'red' | 'mint';
-}
-
-const categories: readonly CategoryCard[] = [
-  { label: 'Photos', icon: Camera, count: '32,408', filter: 'PHOTO', accent: 'green' },
-  { label: 'Videos', icon: Film, count: '3,108', filter: 'VIDEO', accent: 'blue' },
-  { label: 'Illustrations', icon: Palette, count: '8,742', filter: 'GRAPHIC', accent: 'gold' },
-  { label: '3D Models', icon: Box, count: '1,204', filter: '3D', accent: 'red' },
-  { label: 'Patterns', icon: Grid2X2, count: '5,318', filter: 'ALL', accent: 'mint' },
+/* Rotating natural-language examples — each phrase is written so its
+   keywords overlap real asset tags, so every example returns results. */
+const examplePrompts: readonly string[] = [
+  'Market women selling fresh produce in Accra',
+  'Kente fabric close-up with gold and green tones',
+  'Aerial view of the city skyline at twilight',
+  'Studio portrait with traditional beads',
+  'Palm-lined gardens on a bright afternoon',
+  'Modern architecture against a clear sky',
 ] as const;
-
-const trendingTags: readonly string[] = [
-  'Kente patterns',
-  'Market scenes',
-  'Afrobeat',
-  'Adinkra symbols',
-  'Accra skyline',
-  'Cocoa harvest',
-] as const;
-
-type LicenseTier = 'all' | 'free' | 'premium';
 
 export function Discover() {
   const navigate = useNavigate();
   const loading = useFakeLoad(550);
   const [query, setQuery] = useState<string>('');
   const [activeCategory, setActiveCategory] = useState<AssetType | 'ALL'>('ALL');
-  const [licenseTier, setLicenseTier] = useState<LicenseTier>('all');
   const [visibleCount, setVisibleCount] = useState<number>(12);
+  const [promptIndex, setPromptIndex] = useState<number>(0);
+  const [promptPaused, setPromptPaused] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (promptPaused) return;
+    const id = window.setInterval(
+      () => setPromptIndex((i) => (i + 1) % examplePrompts.length),
+      4500,
+    );
+    return () => window.clearInterval(id);
+  }, [promptPaused]);
 
   const submit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -77,13 +57,10 @@ export function Discover() {
   );
 
   const filteredAssets = useMemo(() => {
-    return assets.filter((a) => {
-      if (activeCategory !== 'ALL' && a.type !== activeCategory) return false;
-      if (licenseTier === 'free' && a.premium) return false;
-      if (licenseTier === 'premium' && !a.premium) return false;
-      return true;
-    });
-  }, [activeCategory, licenseTier]);
+    return assets.filter(
+      (a) => activeCategory === 'ALL' || a.type === activeCategory,
+    );
+  }, [activeCategory]);
 
   const browseAssets = useMemo(
     () => filteredAssets.slice(0, visibleCount),
@@ -94,7 +71,7 @@ export function Discover() {
 
   useEffect(() => {
     setVisibleCount(12);
-  }, [activeCategory, licenseTier]);
+  }, [activeCategory]);
 
   return (
     <div className="discover-v2">
@@ -106,13 +83,7 @@ export function Discover() {
           initial="hidden"
           animate="visible"
         >
-          <motion.p className="hero-eyebrow" variants={heroItem} custom={0}>
-            <Sparkles size={14} />
-            AI-tagged creative library · Made in Ghana
-          </motion.p>
           <motion.h1 variants={heroItem} custom={1}>
-            All the assets your <em>creative work</em> needs.
-            <br />
             Search the way you think.
           </motion.h1>
           <motion.form
@@ -121,10 +92,10 @@ export function Discover() {
             variants={heroItem}
             custom={2}
           >
-            <Search size={22} />
+            <Icon name="search" size={24} />
             <input
               aria-label="Search assets"
-              placeholder="Try 'market scenes with bold colors' or 'kente patterns'"
+              placeholder="Describe the image you need…"
               value={query}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setQuery(e.target.value)
@@ -132,56 +103,35 @@ export function Discover() {
             />
             <button className="hero-v2-search-btn" type="submit">
               Search
-              <ArrowRight size={18} />
             </button>
           </motion.form>
           <motion.div
-            className="hero-v2-trending"
+            className="hero-v2-example"
             variants={heroItem}
             custom={3}
+            onMouseEnter={() => setPromptPaused(true)}
+            onMouseLeave={() => setPromptPaused(false)}
           >
-            <span>Popular:</span>
-            {trendingTags.map((tag) => (
-              <Link key={tag} to={`/search?q=${encodeURIComponent(tag)}`}>
-                {tag}
-              </Link>
-            ))}
-          </motion.div>
-          <motion.div className="hero-v2-stats" variants={heroItem} custom={4}>
-            <div>
-              <strong>50K+</strong>
-              <span>Creative assets</span>
-            </div>
-            <div>
-              <strong>500+</strong>
-              <span>Ghanaian creators</span>
-            </div>
-            <div>
-              <strong>120K+</strong>
-              <span>Downloads / month</span>
-            </div>
+            <span>Try</span>
+            <AnimatePresence mode="wait">
+              <motion.button
+                key={promptIndex}
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/search?q=${encodeURIComponent(examplePrompts[promptIndex])}`,
+                  )
+                }
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+              >
+                “{examplePrompts[promptIndex]}”
+              </motion.button>
+            </AnimatePresence>
           </motion.div>
         </motion.div>
-      </section>
-
-      {/* CATEGORY MEGA-STRIP */}
-      <section className="category-mega">
-        {categories.map(({ label, icon: Icon, count, filter, accent }) => (
-          <button
-            key={label}
-            type="button"
-            className={`category-mega-card ${accent} ${
-              activeCategory === filter ? 'active' : ''
-            }`}
-            onClick={() => setActiveCategory(filter)}
-          >
-            <span className="category-mega-icon">
-              <Icon size={26} />
-            </span>
-            <span className="category-mega-label">{label}</span>
-            <span className="category-mega-count">{count}</span>
-          </button>
-        ))}
       </section>
 
       {/* TRENDING ROW */}
@@ -189,14 +139,14 @@ export function Discover() {
         <div className="discover-section-head">
           <div>
             <h2>
-              <TrendingUp size={22} />
+              <Icon name="trending_up" size={24} />
               Trending this week
             </h2>
             <p>What Ghanaian creatives are downloading right now.</p>
           </div>
           <Link to="/search?q=trending" className="text-button">
             View all
-            <ChevronRight size={16} />
+            <Icon name="chevron_right" size={16} />
           </Link>
         </div>
         <div className="trending-row">
@@ -219,12 +169,9 @@ export function Discover() {
               <div className="trending-card-meta">
                 <strong>{asset.displayTitle}</strong>
                 <span>
-                  {asset.type} · {asset.size}
+                  {asset.format} · {asset.size}
                 </span>
               </div>
-              {asset.premium && (
-                <span className="trending-premium">Premium</span>
-              )}
             </Link>
           ))}
         </div>
@@ -239,7 +186,7 @@ export function Discover() {
           </div>
           <Link to="/collections" className="text-button">
             All collections
-            <ChevronRight size={16} />
+            <Icon name="chevron_right" size={16} />
           </Link>
         </div>
         <div className="collection-strip">
@@ -265,37 +212,37 @@ export function Discover() {
             <h2>Browse the library</h2>
             <p>
               {browseAssets.length} assets
-              {activeCategory !== 'ALL' && ` in ${activeCategory.toLowerCase()}`}
+              {activeCategory === 'PHOTO' && ' in photos'}
+              {activeCategory === 'ILLUSTRATION' && ' in illustrations'}
             </p>
           </div>
           <div className="license-toggle" role="tablist">
             <button
               type="button"
               role="tab"
-              aria-selected={licenseTier === 'all'}
-              className={licenseTier === 'all' ? 'active' : ''}
-              onClick={() => setLicenseTier('all')}
+              aria-selected={activeCategory === 'ALL'}
+              className={activeCategory === 'ALL' ? 'active' : ''}
+              onClick={() => setActiveCategory('ALL')}
             >
               All
             </button>
             <button
               type="button"
               role="tab"
-              aria-selected={licenseTier === 'free'}
-              className={licenseTier === 'free' ? 'active' : ''}
-              onClick={() => setLicenseTier('free')}
+              aria-selected={activeCategory === 'PHOTO'}
+              className={activeCategory === 'PHOTO' ? 'active' : ''}
+              onClick={() => setActiveCategory('PHOTO')}
             >
-              Free
+              Photos
             </button>
             <button
               type="button"
               role="tab"
-              aria-selected={licenseTier === 'premium'}
-              className={licenseTier === 'premium' ? 'active' : ''}
-              onClick={() => setLicenseTier('premium')}
+              aria-selected={activeCategory === 'ILLUSTRATION'}
+              className={activeCategory === 'ILLUSTRATION' ? 'active' : ''}
+              onClick={() => setActiveCategory('ILLUSTRATION')}
             >
-              <span className="license-toggle-crown">★</span>
-              Premium
+              Illustrations
             </button>
           </div>
         </div>
@@ -304,15 +251,15 @@ export function Discover() {
           variants={gridContainer}
           initial="hidden"
           animate={loading ? 'hidden' : 'visible'}
-          key={`${activeCategory}-${licenseTier}`}
+          key={activeCategory}
         >
           {loading ? (
             <SkeletonAssetGrid count={8} />
           ) : browseAssets.length === 0 ? (
             <div className="browse-empty">
-              <ImageIcon size={42} />
+              <Icon name="image" size={40} />
               <h3>Nothing matches those filters yet</h3>
-              <p>Try a different category or license tier.</p>
+              <p>Try a different category.</p>
             </div>
           ) : (
             browseAssets.map((asset) => (
@@ -344,7 +291,7 @@ export function Discover() {
         <div className="discover-section-head">
           <div>
             <h2>
-              <Users size={22} />
+              <Icon name="group" size={24} />
               Featured creators
             </h2>
             <p>Hand-picked studios and photographers from across Ghana.</p>
@@ -379,7 +326,7 @@ export function Discover() {
         </div>
         <Link className="primary-button wide" to="/signup">
           Get started free
-          <ArrowRight size={18} />
+          <Icon name="arrow_forward" size={20} />
         </Link>
       </section>
     </div>

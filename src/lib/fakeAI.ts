@@ -136,7 +136,7 @@ const themes: readonly ThemeProfile[] = [
       'Editorial',
     ],
     insight:
-      'Dynamic frame with implied motion. Best used in formats that can hold movement — video stills, hero banners, or animated splash content.',
+      'Dynamic frame with implied motion. Best used in formats that can hold movement — hero banners, campaign covers, or splash imagery.',
   },
 ];
 

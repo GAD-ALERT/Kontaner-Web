@@ -26,11 +26,9 @@
   opacity: 1;
 }
 
-/* Keep type label, premium badge, bookmark above the image */
-.asset-visual .asset-type,
-.asset-visual .asset-premium,
+/* Keep the bookmark control above the image (absolute: styles.css pins it top-right) */
 .asset-visual .bookmark-button {
-  position: relative;
+  position: absolute;
   z-index: 2;
 }
 
@@ -83,8 +81,7 @@
   z-index: 1;
   pointer-events: none;
 }
-.trending-card-meta,
-.trending-premium {
+.trending-card-meta {
   position: relative;
   z-index: 2;
 }
@@ -170,44 +167,65 @@
   padding: 4px 8px;
   border-radius: 999px;
 }
-.dominant-row {
+/* Palette chips — color block + always-visible hex, whole chip copies */
+.palette-row {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 12px;
 }
-.dominant-colors .tone {
-  position: relative;
-  display: inline-block;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+.palette-chip {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 0;
+  border: 0;
+  background: none;
   cursor: pointer;
-  overflow: hidden;
+  text-align: center;
+}
+.palette-chip .palette-block {
+  position: relative;
+  display: block;
+  height: 76px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(0, 0, 0, 0.10);
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
-.dominant-colors .tone:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(20, 40, 30, 0.18);
+.palette-chip:hover .palette-block {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(20, 40, 30, 0.16);
 }
-.dominant-colors .tone .tone-label {
+.palette-chip .palette-copy {
   position: absolute;
-  inset: auto 0 0 0;
-  font-size: 10px;
-  font-weight: 700;
-  color: white;
-  background: rgba(0, 0, 0, 0.55);
-  padding: 3px 2px;
-  text-align: center;
-  letter-spacing: 0.4px;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: #33423b;
+  background: rgba(255, 255, 255, 0.85);
   opacity: 0;
-  transition: opacity 0.18s ease;
+  transition: opacity 0.15s ease;
 }
-.dominant-colors .tone:hover .tone-label {
+.palette-chip:hover .palette-copy,
+.palette-chip:focus-visible .palette-copy {
   opacity: 1;
 }
-.dominant-colors .tone.tone-skeleton {
+.palette-chip .palette-hex {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  color: var(--muted);
+  transition: color 0.15s ease;
+}
+.palette-chip .palette-hex.copied {
+  color: var(--green);
+  font-weight: 700;
+}
+.palette-block.tone-skeleton {
   background: linear-gradient(
     90deg,
     var(--panel-muted) 0%,
@@ -216,16 +234,9 @@
   );
   background-size: 200px 100%;
   animation: skeleton-pulse 1.4s ease-in-out infinite;
-  cursor: default;
 }
-.dominant-colors .tone.tone-empty {
+.palette-block.tone-empty {
   background: var(--panel-muted);
-  cursor: default;
-}
-.dominant-hint {
-  margin: 10px 0 0;
-  font-size: 12px;
-  color: var(--faint);
 }
 
 /* ---- Collection cover tiles also get images (background-image inline) ---- */

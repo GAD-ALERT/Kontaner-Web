@@ -1,16 +1,8 @@
-import {
-  ArrowLeft,
-  Edit3,
-  FolderOpen,
-  Globe2,
-  Lock,
-  Share2,
-  Trash2,
-} from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { AssetCard } from '../components/AssetCard';
+import { Icon } from '../components/Icon';
 import { useCollections } from '../stores/collections';
 import { useLibrary } from '../stores/library';
 import { assets as catalog } from '../data/assets';
@@ -44,7 +36,7 @@ export function CollectionDetail() {
   if (!collection) {
     return (
       <div className="page collection-detail-empty">
-        <FolderOpen size={42} />
+        <Icon name="folder_open" size={40} />
         <h2>This collection no longer exists</h2>
         <p>It may have been deleted from another device.</p>
         <Link to="/collections" className="primary-button compact">
@@ -87,7 +79,7 @@ export function CollectionDetail() {
   return (
     <div className="page collection-detail-page">
       <Link to="/collections" className="collection-detail-back">
-        <ArrowLeft size={16} /> All collections
+        <Icon name="arrow_back" size={16} /> All collections
       </Link>
 
       <header className="collection-detail-hero">
@@ -96,7 +88,7 @@ export function CollectionDetail() {
             className="collection-privacy"
             title={collection.isPublic ? 'Public' : 'Private'}
           >
-            {collection.isPublic ? <Globe2 size={14} /> : <Lock size={14} />}
+            <Icon name={collection.isPublic ? 'public' : 'lock'} size={16} />
             {collection.isPublic ? 'Public' : 'Private'}
           </span>
         </div>
@@ -121,21 +113,21 @@ export function CollectionDetail() {
               className="outline-button compact"
               onClick={() => void handleShare()}
             >
-              <Share2 size={16} /> Share
+              <Icon name="share" size={16} /> Share
             </button>
             <button
               type="button"
               className="outline-button compact"
               onClick={handleRename}
             >
-              <Edit3 size={16} /> Rename
+              <Icon name="edit" size={16} /> Rename
             </button>
             <button
               type="button"
               className="text-button danger"
               onClick={handleDelete}
             >
-              <Trash2 size={16} /> Delete
+              <Icon name="delete" size={16} /> Delete
             </button>
           </div>
         </div>
@@ -175,7 +167,7 @@ export function CollectionDetail() {
 
       {items.length === 0 ? (
         <section className="collection-empty">
-          <FolderOpen size={32} />
+          <Icon name="folder_open" size={32} />
           <h2>This collection is empty</h2>
           <p>
             Add assets from your library, or browse Discover and tap “Add to
@@ -205,7 +197,7 @@ export function CollectionDetail() {
                 onClick={() => handleRemoveItem(asset.id, asset.displayTitle)}
                 aria-label={`Remove ${asset.displayTitle} from collection`}
               >
-                <Trash2 size={14} />
+                <Icon name="delete" size={16} />
                 Remove
               </button>
             </motion.div>

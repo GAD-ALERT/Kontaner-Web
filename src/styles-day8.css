@@ -47,7 +47,7 @@
 .toast-info .toast-icon    { background: #e6f0fb; color: var(--blue); }
 .toast-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .toast-body strong { font-size: 14px; font-weight: 700; }
-.toast-body span { font-size: 12.5px; color: var(--muted); }
+.toast-body span { font-size: 13px; color: var(--muted); }
 .toast-action {
   font-size: 12px;
   font-weight: 700;
@@ -181,8 +181,8 @@
 .notif-body {
   min-width: 0;
 }
-.notif-body strong { font-size: 13.5px; font-weight: 700; display: block; }
-.notif-body p { margin: 2px 0; font-size: 12.5px; color: var(--muted); }
+.notif-body strong { font-size: 14px; font-weight: 700; display: block; }
+.notif-body p { margin: 2px 0; font-size: 13px; color: var(--muted); }
 .notif-body time { font-size: 11px; color: var(--faint); }
 .notif-dot {
   width: 8px;
@@ -271,7 +271,7 @@
   gap: 14px;
 }
 .add-collection-card header h2 { margin: 0 0 4px; font-size: 18px; font-weight: 800; }
-.add-collection-card header p { margin: 0; font-size: 12.5px; color: var(--muted); }
+.add-collection-card header p { margin: 0; font-size: 13px; color: var(--muted); }
 .add-collection-card header button {
   border: 0;
   background: var(--panel-soft);
@@ -569,14 +569,14 @@
   padding: 18px 20px;
 }
 .insight-card h3 { margin: 0 0 6px; font-size: 15px; font-weight: 800; color: var(--green); }
-.insight-card p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.55; color: var(--ink); }
+.insight-card p { margin: 0 0 10px; font-size: 14px; line-height: 1.55; color: var(--ink); }
 .insight-card .text-button {
   background: var(--panel);
   border: 1px solid var(--green);
   color: var(--green);
   border-radius: 999px;
   padding: 6px 14px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -800,7 +800,7 @@
   border-radius: 12px;
 }
 .notif-prefs strong { font-size: 14px; }
-.notif-prefs p { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
+.notif-prefs p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
 
 .plan-card {
   background: linear-gradient(135deg, rgba(0,105,76,0.06), rgba(120,237,191,0.06));
@@ -814,7 +814,7 @@
   margin-bottom: 14px;
 }
 .plan-card strong { font-size: 16px; }
-.plan-card p { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); }
+.plan-card p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
 .plan-price {
   font-size: 16px;
   font-weight: 800;
@@ -927,4 +927,86 @@
   .notif-panel { width: 320px; right: -10px; }
   .add-collection-card { padding: 18px; }
   .collection-detail-hero { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Polish pass — Material Symbols alignment & consistency
+   (loaded last on purpose: these rules win the cascade)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Nav labels never wrap — "My Library" stays on one line at every width */
+.nav-link {
+  white-space: nowrap;
+}
+
+/* Headings that lead with an icon: optical centering, fixed gap */
+.tag-panel h2,
+.ai-insight h2,
+.discover-section-head h2,
+.collections-heading h1,
+.storage-card .section-heading h2,
+.library-hero p,
+.search-intro-line,
+.upload-v2-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tag-panel h2 .msr,
+.ai-insight h2 .msr,
+.discover-section-head h2 .msr,
+.collections-heading h1 .msr {
+  color: var(--green);
+}
+
+/* Topbar avatar: a plain 40px circle (Google style) — photo fills it,
+   fallback icon centers in it, no chevron */
+.avatar-button {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.avatar-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Profile portrait fallback icon */
+.portrait-art {
+  display: grid;
+  place-items: center;
+}
+
+.portrait-art .msr {
+  color: white;
+}
+
+/* Icon inside text buttons and menu rows sits on the text baseline */
+.text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Consistent focus treatment on every interactive element */
+:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.primary-button:focus-visible,
+.secondary-button:focus-visible,
+.outline-button:focus-visible,
+.topbar-upload:focus-visible {
+  border-radius: var(--r-md);
 }

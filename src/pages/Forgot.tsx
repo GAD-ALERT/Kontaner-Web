@@ -1,6 +1,6 @@
-import { Archive, MailCheck } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { Icon } from '../components/Icon';
 
 export function Forgot() {
   const [email, setEmail] = useState<string>('');
@@ -17,7 +17,7 @@ export function Forgot() {
         <div className="login-overlay">
           <div className="login-brand">
             <span>
-              <Archive size={28} />
+              <Icon name="inventory_2" size={24} />
             </span>
             <strong>Kontaner</strong>
           </div>
@@ -32,7 +32,7 @@ export function Forgot() {
         {sent ? (
           <div className="forgot-sent">
             <div className="forgot-check">
-              <MailCheck size={48} />
+              <Icon name="mark_email_read" size={40} />
             </div>
             <h2>Reset link on the way</h2>
             <p>

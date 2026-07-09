@@ -1,9 +1,9 @@
-import { Lock, Sparkles, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { useLoginGate } from '../stores/favorites';
 import { useAuth } from '../stores/auth';
 import { modalSpring } from '../lib/motion';
+import { Icon } from './Icon';
 
 export function LoginGate() {
   const { open, reason, hide } = useLoginGate();
@@ -41,10 +41,10 @@ export function LoginGate() {
               type="button"
               onClick={hide}
             >
-              <X size={22} />
+              <Icon name="close" size={20} />
             </button>
             <div className="gate-icon">
-              <Lock size={28} />
+              <Icon name="lock" size={32} />
             </div>
             <h2>{reason}</h2>
             <p>
@@ -53,7 +53,7 @@ export function LoginGate() {
             </p>
             <div className="gate-actions">
               <Link className="primary-button wide" to="/signup" onClick={hide}>
-                <Sparkles size={18} />
+                <Icon name="auto_awesome" size={20} />
                 Create free account
               </Link>
               <Link className="outline-button wide" to="/login" onClick={hide}>

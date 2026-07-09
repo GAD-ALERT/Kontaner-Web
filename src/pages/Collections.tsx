@@ -1,22 +1,7 @@
-import {
-  Edit3,
-  FolderOpen,
-  Globe2,
-  Grid2X2,
-  ImagePlus,
-  Lightbulb,
-  Lock,
-  MoreVertical,
-  Plus,
-  Settings as SettingsIcon,
-  Sparkles,
-  Tag,
-  Trash2,
-  X,
-} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
+import { Icon } from '../components/Icon';
 import { useCollections } from '../stores/collections';
 import { useFavorites } from '../stores/favorites';
 import { useNotifications } from '../stores/notifications';
@@ -43,15 +28,15 @@ type WorkspaceTab = 'overview' | 'all-assets' | 'collections' | 'insights' | 'se
 interface SidebarItem {
   id: WorkspaceTab;
   label: string;
-  icon: typeof Grid2X2;
+  icon: string;
 }
 
 const sidebarItems: readonly SidebarItem[] = [
-  { id: 'overview', label: 'Overview', icon: Grid2X2 },
-  { id: 'all-assets', label: 'All Assets', icon: FolderOpen },
-  { id: 'collections', label: 'Collections', icon: Tag },
-  { id: 'insights', label: 'AI Insights', icon: Lightbulb },
-  { id: 'settings', label: 'Settings', icon: SettingsIcon },
+  { id: 'overview', label: 'Overview', icon: 'grid_view' },
+  { id: 'all-assets', label: 'All Assets', icon: 'folder_open' },
+  { id: 'collections', label: 'Collections', icon: 'label' },
+  { id: 'insights', label: 'AI Insights', icon: 'lightbulb' },
+  { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
 
 export function Collections() {
@@ -147,14 +132,14 @@ export function Collections() {
   return (
     <div className="page collections-page">
       <aside className="workspace-sidebar">
-        {sidebarItems.map(({ id, label, icon: Icon }) => (
+        {sidebarItems.map(({ id, label, icon }) => (
           <button
             key={id}
             type="button"
             className={tab === id ? 'active' : ''}
             onClick={() => handleSidebarClick(id)}
           >
-            <Icon size={22} />
+            <Icon name={icon} size={20} filled={tab === id} />
             {label}
           </button>
         ))}
@@ -232,13 +217,13 @@ export function Collections() {
                   type="button"
                   onClick={() => setModalOpen(true)}
                 >
-                  <Plus size={19} />
+                  <Icon name="add" size={20} />
                   New Collection
                 </button>
               </div>
               {collections.length === 0 ? (
                 <div className="collections-empty">
-                  <FolderOpen size={36} />
+                  <Icon name="folder_open" size={40} />
                   <h2>No collections yet</h2>
                   <p>Group assets by theme, project, or campaign.</p>
                   <button
@@ -246,7 +231,7 @@ export function Collections() {
                     className="primary-button compact"
                     onClick={() => setModalOpen(true)}
                   >
-                    <Plus size={18} />
+                    <Icon name="add" size={20} />
                     Create your first
                   </button>
                 </div>
@@ -274,7 +259,10 @@ export function Collections() {
                             className="collection-privacy"
                             title={collection.isPublic ? 'Public' : 'Private'}
                           >
-                            {collection.isPublic ? <Globe2 size={14} /> : <Lock size={14} />}
+                            <Icon
+                              name={collection.isPublic ? 'public' : 'lock'}
+                              size={16}
+                            />
                             {collection.isPublic ? 'Public' : 'Private'}
                           </span>
                         </div>
@@ -298,7 +286,7 @@ export function Collections() {
                               );
                             }}
                           >
-                            <MoreVertical size={20} />
+                            <Icon name="more_vert" size={20} />
                           </button>
                           {menuOpenId === collection.id && (
                             <div
@@ -313,13 +301,13 @@ export function Collections() {
                                   setMenuOpenId(null);
                                 }}
                               >
-                                <FolderOpen size={14} /> Open
+                                <Icon name="folder_open" size={16} /> Open
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleRename(collection.id, collection.name)}
                               >
-                                <Edit3 size={14} /> Rename
+                                <Icon name="edit" size={16} /> Rename
                               </button>
                               <button
                                 type="button"
@@ -334,14 +322,14 @@ export function Collections() {
                                   setMenuOpenId(null);
                                 }}
                               >
-                                <Globe2 size={14} /> Copy share link
+                                <Icon name="link" size={16} /> Copy share link
                               </button>
                               <button
                                 type="button"
                                 className="danger"
                                 onClick={() => handleDelete(collection.id, collection.name)}
                               >
-                                <Trash2 size={14} /> Delete
+                                <Icon name="delete" size={16} /> Delete
                               </button>
                             </div>
                           )}
@@ -359,7 +347,7 @@ export function Collections() {
               <div className="collections-heading">
                 <div>
                   <h1>
-                    <Sparkles size={22} />
+                    <Icon name="auto_awesome" size={24} />
                     AI Insights
                   </h1>
                   <p>What our engine notices about your library this week.</p>
@@ -387,14 +375,14 @@ export function Collections() {
                       navigate(`/collection/${created.id}`);
                     }}
                   >
-                    <Plus size={14} /> Draft this collection
+                    <Icon name="add" size={16} /> Draft this collection
                   </button>
                 </article>
                 <article className="insight-card">
                   <h3>Colors you keep returning to</h3>
                   <p>
                     Warm gold and emerald run through {Math.max(60, totals.assets)}% of your
-                    library. Try filtering Discover by Premium to find more in this tonal range.
+                    library. Browse Discover to find more in this tonal range.
                   </p>
                   <Link to="/" className="text-button">
                     Browse Discover
@@ -440,7 +428,7 @@ export function Collections() {
                   type="button"
                   onClick={() => setModalOpen(false)}
                 >
-                  <X size={25} />
+                  <Icon name="close" size={24} />
                 </button>
               </header>
               <div className="modal-body">
@@ -480,12 +468,12 @@ export function Collections() {
                       aria-label="Upload custom cover"
                       onClick={() => toast.info('Custom covers coming soon')}
                     >
-                      <ImagePlus size={24} />
+                      <Icon name="add_photo_alternate" size={24} />
                     </button>
                   </div>
                 </div>
                 <div className="toggle-row">
-                  <Globe2 size={24} />
+                  <Icon name="public" size={24} />
                   <div>
                     <strong>Public Collection</strong>
                     <p>Anyone with the link can view this collection.</p>

@@ -1,7 +1,7 @@
-import { Search, Sparkles, SlidersHorizontal, X, ZoomOut } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { Icon } from '../components/Icon';
 import { SkeletonAssetGrid } from '../components/Skeleton';
 import { assets } from '../data/assets';
 import { useFavorites } from '../stores/favorites';
@@ -68,7 +68,7 @@ export function SearchResults() {
               : `No results for '${query}'`}
         </h1>
         <p className="search-intro-line">
-          <Sparkles size={15} />
+          <Icon name="auto_awesome" size={16} />
           {normalized
             ? `Ranked by semantic relevance · top match scored ${Math.round(topScore * 10) / 10}`
             : 'Found in your personal library and creative collections.'}
@@ -113,7 +113,7 @@ export function SearchResults() {
           type="button"
           onClick={() => navigate('/')}
         >
-          <SlidersHorizontal size={16} />
+          <Icon name="tune" size={16} />
           All Filters
         </button>
         {normalized && (
@@ -123,7 +123,7 @@ export function SearchResults() {
             onClick={clearQuery}
             aria-label={`Remove filter: ${query}`}
           >
-            Query: {query} <X size={15} />
+            Query: {query} <Icon name="close" size={16} />
           </button>
         )}
         {(normalized || tab !== 'discover') && (
@@ -143,7 +143,7 @@ export function SearchResults() {
       {loading ? (
         <section className="search-loading">
           <div className="ai-pulse">
-            <Sparkles size={18} />
+            <Icon name="auto_awesome" size={20} />
             Understanding your query…
           </div>
           <section className="masonry-results loading">
@@ -172,7 +172,7 @@ export function SearchResults() {
                   )}
                   {normalized && score > 0 && (
                     <span className="match-badge" title={`Matched: ${matched.join(', ')}`}>
-                      <Sparkles size={11} />
+                      <Icon name="auto_awesome" size={16} />
                       {Math.round(score * 10) / 10}
                     </span>
                   )}
@@ -206,7 +206,7 @@ export function SearchResults() {
       ) : (
         <section className="empty-state">
           <span>
-            <ZoomOut size={56} />
+            <Icon name="search_off" size={56} />
           </span>
           <h2>No matches for '{query}'</h2>
           <p>
@@ -217,7 +217,7 @@ export function SearchResults() {
           <div className="suggestion-row">
             {popularQueries.map((q) => (
               <Link key={q} to={`/search?q=${encodeURIComponent(q)}`}>
-                <Search size={16} />
+                <Icon name="search" size={16} />
                 {q}
               </Link>
             ))}
