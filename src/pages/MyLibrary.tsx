@@ -4,12 +4,11 @@ import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { AssetCard } from '../components/AssetCard';
 import { SkeletonAssetGrid } from '../components/Skeleton';
-import { assets } from '../data/assets';
 import { useFavorites } from '../stores/favorites';
 import { useLibrary } from '../stores/library';
-import { useFakeLoad } from '../hooks/useFakeLoad';
 import { gridContainer, gridItem } from '../lib/motion';
 import type { Asset, AssetType } from '../types';
+import { toast } from '../stores/toast';
 
 type LibraryFilter = 'All' | 'Photos' | 'Videos' | 'Illustrations' | '3D' | 'Recent';
 type SortKey = 'date' | 'name' | 'popular';
@@ -39,20 +38,38 @@ const sortLabels: Record<SortKey, string> = {
 
 export function MyLibrary() {
   const favoriteIds = useFavorites((s) => s.ids);
-  const loading = useFakeLoad(500);
+  const favoriteAssets = useFavorites((s) => s.items);
   const [filter, setFilter] = useState<LibraryFilter>('All');
   const [sort, setSort] = useState<SortKey>('date');
   const [sortOpen, setSortOpen] = useState<boolean>(false);
   const [view, setView] = useState<ViewMode>('grid');
 
   const uploads = useLibrary((s) => s.uploads);
+  const loading = useLibrary((s) => s.loading);
+  const updateUpload = useLibrary((s) => s.updateUpload);
+  const deleteUpload = useLibrary((s) => s.deleteUpload);
+  const uploadIds = useMemo(() => new Set(uploads.map((asset) => asset.id)), [uploads]);
+
+  const renameUpload = async (asset: Asset): Promise<void> => {
+    const next = window.prompt('Asset title', asset.displayTitle)?.trim();
+    if (!next || next === asset.displayTitle) return;
+    try {
+      await updateUpload(asset.id, { displayTitle: next });
+      toast.success('Asset updated');
+    } catch (err) { toast.error('Update failed', err instanceof Error ? err.message : undefined); }
+  };
+
+  const removeOwnedUpload = async (asset: Asset): Promise<void> => {
+    if (!window.confirm(`Permanently delete "${asset.displayTitle}"?`)) return;
+    try {
+      await deleteUpload(asset.id);
+      toast.success('Asset deleted');
+    } catch (err) { toast.error('Delete failed', err instanceof Error ? err.message : undefined); }
+  };
 
   const library: Asset[] = useMemo(() => {
-    const seeded = assets.slice(4, 22);
-    const baseline =
-      favoriteIds.length > 0
-        ? [...uploads, ...assets.filter((a) => favoriteIds.includes(a.id))]
-        : [...uploads, ...seeded];
+    const baseline = [...uploads, ...favoriteAssets.filter((a) => favoriteIds.includes(a.id))]
+      .filter((asset, index, list) => list.findIndex((item) => item.id === asset.id) === index);
 
     const filtered =
       filter === 'All' || filter === 'Recent'
@@ -69,7 +86,7 @@ export function MyLibrary() {
       return sorted.slice(0, 6);
     }
     return sorted;
-  }, [favoriteIds, filter, sort, uploads]);
+  }, [favoriteAssets, favoriteIds, filter, sort, uploads]);
 
   return (
     <div className="page library-page">
@@ -178,6 +195,12 @@ export function MyLibrary() {
           {library.map((asset) => (
             <motion.div key={asset.id} variants={gridItem}>
               <AssetCard asset={asset} />
+              {uploadIds.has(asset.id) && (
+                <div className="settings-actions">
+                  <button type="button" className="text-button" onClick={() => void renameUpload(asset)}>Rename</button>
+                  <button type="button" className="text-button danger" onClick={() => void removeOwnedUpload(asset)}>Delete</button>
+                </div>
+              )}
             </motion.div>
           ))}
         </motion.section>
@@ -202,6 +225,9 @@ export function MyLibrary() {
               <Link className="library-list-open" to={`/asset/${asset.id}`}>
                 Open
               </Link>
+              {uploadIds.has(asset.id) && (
+                <button className="text-button" type="button" onClick={() => void renameUpload(asset)}>Rename</button>
+              )}
             </article>
           ))}
         </section>

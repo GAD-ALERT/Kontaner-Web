@@ -8,23 +8,15 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { CheckCircle2, CloudUpload, Sparkles, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { streamTags, planTagsFor } from '../lib/fakeAI';
 import { useDominantColors } from '../hooks/useDominantColors';
 import { modalSpring } from '../lib/motion';
 import { useLibrary } from '../stores/library';
-import { useAuth } from '../stores/auth';
 import { useNotifications } from '../stores/notifications';
 import { toast } from '../stores/toast';
-import type { Asset, AssetFormat, AssetType, VisualClass } from '../types';
+import { apiStreamUpload } from '../lib/api';
+import type { UploadResponse } from '../types';
 
 type UploadStage = 'idle' | 'uploading' | 'processing' | 'tagging' | 'done';
-
-interface RecentUpload {
-  name: string;
-  size: string;
-  time: string;
-  visual: string;
-}
 
 interface Step {
   n: number;
@@ -32,59 +24,12 @@ interface Step {
   body: string;
 }
 
-const seedRecentUploads: readonly RecentUpload[] = [
-  { name: 'kente_pattern_01.jpg',   size: '3.4 MB',  time: '2 MINS AGO',  visual: 'visual-kente' },
-  { name: 'art_supplies_set.png',   size: '8.1 MB',  time: '15 MINS AGO', visual: 'visual-studio' },
-  { name: 'accra_modern_arch.tiff', size: '42.5 MB', time: '1 HOUR AGO',  visual: 'visual-architecture' },
-] as const;
-
-const visualPool: VisualClass[] = [
-  'visual-kente',
-  'visual-market',
-  'visual-portrait',
-  'visual-village',
-  'visual-textile',
-  'visual-city',
-  'visual-palms',
-  'visual-illustration',
-  'visual-baskets',
-  'visual-gold',
-  'visual-studio',
-  'visual-architecture',
-];
-
-function inferTypeFromMime(mime: string): AssetType {
-  if (mime.startsWith('video/')) return 'VIDEO';
-  if (mime.includes('illustrator') || mime.includes('svg')) return 'GRAPHIC';
-  return 'PHOTO';
-}
-
-function inferFormatFromName(name: string, mime: string): AssetFormat {
-  const ext = name.split('.').pop()?.toUpperCase() ?? '';
-  if (['JPG', 'JPEG'].includes(ext)) return 'JPG';
-  if (ext === 'PNG') return 'PNG';
-  if (ext === 'WEBP') return 'WEBP';
-  if (ext === 'TIFF' || ext === 'TIF') return 'TIFF';
-  if (ext === 'MP4') return 'MP4';
-  if (ext === 'AI') return 'AI';
-  if (ext === 'OBJ') return 'OBJ';
-  if (ext === 'RAW') return 'RAW';
-  if (mime === 'image/png') return 'PNG';
-  if (mime.startsWith('video/')) return 'MP4';
-  return 'JPG';
-}
-
-function pickVisual(seed: string): VisualClass {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
-  return visualPool[Math.abs(h) % visualPool.length];
-}
 
 const steps: readonly Step[] = [
   {
     n: 1,
     title: 'Upload high-res files',
-    body: 'Up to 100 MB per file to maintain quality for print and digital use.',
+    body: 'Up to 25 MB per file to maintain quality for print and digital use.',
   },
   {
     n: 2,
@@ -98,18 +43,16 @@ const steps: readonly Step[] = [
   },
 ] as const;
 
-function formatBytes(b: number): string {
-  if (b < 1024) return `${b} B`;
-  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
-  return `${(b / 1024 / 1024).toFixed(1)} MB`;
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 export function Upload() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
-  const user = useAuth((s) => s.user);
   const addUpload = useLibrary((s) => s.addUpload);
-  const removeUpload = useLibrary((s) => s.removeUpload);
   const uploads = useLibrary((s) => s.uploads);
   const pushNotif = useNotifications((s) => s.push);
 
@@ -129,7 +72,7 @@ export function Upload() {
         time: 'Just now',
         visual: a.visual,
       }))
-    : seedRecentUploads;
+    : [];
 
   useEffect(() => {
     return () => {
@@ -149,39 +92,7 @@ export function Upload() {
   };
 
   const handleSaveToLibrary = (): void => {
-    if (!file) return;
-    const id = `up-${Date.now().toString(36)}-${Math.random()
-      .toString(36)
-      .slice(2, 6)}`;
-    const asset: Asset = {
-      id,
-      title: file.name,
-      displayTitle: file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '),
-      type: inferTypeFromMime(file.type),
-      format: inferFormatFromName(file.name, file.type),
-      size: formatBytes(file.size),
-      date: new Date().toLocaleDateString('en-GB', {
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric',
-      }),
-      owner: user?.name ?? 'Verified Author',
-      visual: pickVisual(file.name),
-      tags,
-      src: previewUrl,
-      likes: 0,
-      downloads: 0,
-      premium: false,
-    };
-    addUpload(asset);
-    setSavedAssetId(id);
-    pushNotif({
-      tone: 'collection',
-      title: `${asset.displayTitle} saved`,
-      body: `Tagged with ${tags.slice(0, 3).join(', ')}.`,
-      href: `/asset/${asset.id}`,
-    });
-    toast.success('Saved to your library', undefined);
+    if (savedAssetId) navigate(`/asset/${savedAssetId}`);
   };
 
   const handleFile = async (next: File | undefined): Promise<void> => {
@@ -193,31 +104,41 @@ export function Upload() {
     setTags([]);
     setInsight('');
 
-    // ── 1. Fake upload progress ─────────────────────────
+    // The backend performs Cloudinary upload, Gemini analysis, and persistence.
     setStage('uploading');
-    setProgress(0);
-    for (let p = 0; p <= 100; p += 6) {
-      await new Promise((r) => setTimeout(r, 60));
-      setProgress(p);
-    }
-    setProgress(100);
+    setProgress(10);
 
     // ── 2. Processing beat ─────────────────────────────
-    setStage('processing');
-    await new Promise((r) => setTimeout(r, 700));
 
     // ── 3. Stream tags in ──────────────────────────────
-    setStage('tagging');
-    const collected: string[] = [];
-    for await (const { tag } of streamTags(next.name)) {
-      collected.push(tag);
-      setTags([...collected]);
-    }
 
     // ── 4. Final insight + done ────────────────────────
-    const plan = planTagsFor(next.name);
-    setInsight(plan.insight);
-    setStage('done');
+    try {
+      const result = await apiStreamUpload<UploadResponse & { tags: string[]; insight: string }>(next, {
+        onStatus: ({ stage: nextStage }) => {
+          if (nextStage === 'uploading') { setStage('uploading'); setProgress(10); }
+          if (nextStage === 'uploaded') { setStage('processing'); setProgress(35); }
+          if (nextStage === 'analyzing') { setStage('processing'); setProgress(55); }
+          if (nextStage === 'indexing') setProgress(85);
+        },
+        onTag: ({ tag }) => {
+          setStage('tagging');
+          setTags((current) => current.includes(tag) ? current : [...current, tag]);
+        },
+        onInsight: ({ insight: nextInsight }) => setInsight(nextInsight),
+      });
+      setProgress(100);
+      setTags(result.tags);
+      setInsight(result.insight);
+      addUpload(result.asset);
+      setSavedAssetId(result.asset.id);
+      setStage('done');
+      pushNotif({ tone: 'collection', title: `${result.asset.displayTitle} uploaded`, body: `Tagged with ${result.tags.slice(0, 3).join(', ')}.`, href: `/asset/${result.asset.id}` });
+      toast.success('Upload complete');
+    } catch (err) {
+      toast.error('Upload failed', err instanceof Error ? err.message : undefined);
+      reset();
+    }
   };
 
   const handleDrop = (event: DragEvent<HTMLDivElement>): void => {
@@ -261,7 +182,7 @@ export function Upload() {
                 </div>
                 <div className="upload-v2-drop-copy">
                   <h2>Drag and drop your image here</h2>
-                  <p>JPG, PNG, TIFF, WEBP · up to 100 MB</p>
+                  <p>JPG, PNG, TIFF, WEBP · up to 25 MB</p>
                 </div>
                 <input
                   ref={inputRef}
@@ -487,17 +408,7 @@ export function Upload() {
                         </Link>
                         <span>{a.size} · {a.date}</span>
                       </div>
-                      <button
-                        type="button"
-                        className="upload-v2-check"
-                        aria-label="Remove from recent uploads"
-                        onClick={() => {
-                          removeUpload(a.id);
-                          toast.info('Removed from library');
-                        }}
-                      >
-                        <X size={15} />
-                      </button>
+                      <CheckCircle2 size={17} className="upload-v2-check" />
                     </li>
                   ))
                 : recentUploads.map((u) => (

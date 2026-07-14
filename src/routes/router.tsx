@@ -4,6 +4,7 @@ import { Discover } from '../pages/Discover';
 import { Login } from '../pages/Login';
 import { Signup } from '../pages/Signup';
 import { Forgot } from '../pages/Forgot';
+import { ResetPassword } from '../pages/ResetPassword';
 import { SearchResults } from '../pages/SearchResults';
 import { AssetDetails } from '../pages/AssetDetails';
 import { MyLibrary } from '../pages/MyLibrary';
@@ -68,4 +69,5 @@ export const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
   { path: '/signup', element: <Signup /> },
   { path: '/forgot', element: <Forgot /> },
+  { path: '/reset-password', element: <ResetPassword /> },
 ]);

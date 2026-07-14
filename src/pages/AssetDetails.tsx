@@ -1,28 +1,25 @@
 import {
   Bookmark,
   Download,
-  Ellipsis,
   Expand,
-  Flag,
   Link as LinkIcon,
   PlusSquare,
   Share2,
   Sparkles,
-  Trash2,
   ZoomIn,
 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
-import { MiniAsset } from '../components/AssetCard';
+import { useEffect, useState } from 'react';
 import { Lightbox } from '../components/Lightbox';
+import { MiniAsset } from '../components/AssetCard';
 import { AddToCollectionModal } from '../components/AddToCollectionModal';
-import { aiTags, assets } from '../data/assets';
 import { useAuth } from '../stores/auth';
 import { useFavorites, useLoginGate } from '../stores/favorites';
 import { useLibrary } from '../stores/library';
 import { useDominantColors } from '../hooks/useDominantColors';
-import { planTagsFor } from '../lib/fakeAI';
 import { toast } from '../stores/toast';
+import { apiRequest } from '../lib/api';
+import type { Asset, AssetResponse } from '../types';
 
 export function AssetDetails() {
   const { id } = useParams<{ id: string }>();
@@ -34,30 +31,50 @@ export function AssetDetails() {
   const hasDownloaded = useLibrary((s) =>
     id ? s.downloads.some((d) => d.assetId === id) : false,
   );
+  const [asset, setAsset] = useState<Asset | null>(null);
+  const [loadError, setLoadError] = useState('');
+  const [similar, setSimilar] = useState<Asset[]>([]);
 
-  const asset = assets.find((a) => a.id === id) ?? assets[0];
-  const similar = assets
-    .filter((a) => a.id !== asset.id && a.type === asset.type)
-    .slice(0, 4);
-  const palette = useDominantColors(asset.src, 5);
-  const insight = planTagsFor(asset.title).insight;
+  const palette = useDominantColors(asset?.src, 5);
+  const insight = asset?.aiInsight ?? 'No AI insight is available for this asset.';
 
   const [zoomOpen, setZoomOpen] = useState<boolean>(false);
   const [collectionOpen, setCollectionOpen] = useState<boolean>(false);
-  const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
-  const moreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!moreOpen) return;
-    const onClick = (e: MouseEvent): void => {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setMoreOpen(false);
+    if (!id) return;
+    const controller = new AbortController();
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) {
+        setLoadError('');
+        setAsset(null);
+        setSimilar([]);
       }
-    };
-    window.addEventListener('mousedown', onClick);
-    return () => window.removeEventListener('mousedown', onClick);
-  }, [moreOpen]);
+    });
+    void apiRequest<AssetResponse>(`/assets/${encodeURIComponent(id)}`, {
+      signal: controller.signal,
+    }).then((result) => setAsset(result.asset)).catch((err: unknown) => {
+      if (!controller.signal.aborted) {
+        setLoadError(err instanceof Error ? err.message : 'Unable to load this asset.');
+      }
+    });
+    void apiRequest<{ items: Asset[] }>(`/assets/${encodeURIComponent(id)}/similar?limit=4`, {
+      signal: controller.signal,
+    }).then((result) => setSimilar(result.items)).catch(() => {
+      if (!controller.signal.aborted) setSimilar([]);
+    });
+    return () => controller.abort();
+  }, [id]);
+
+  if (!asset) {
+    return (
+      <div className="page browse-empty" role={loadError ? 'alert' : 'status'}>
+        <h1>{loadError ? 'Asset unavailable' : 'Loading asset…'}</h1>
+        {loadError && <p>{loadError}</p>}
+      </div>
+    );
+  }
 
   const details: ReadonlyArray<readonly [string, string]> = [
     ['Format', `${asset.format} (${asset.type})`],
@@ -73,35 +90,33 @@ export function AssetDetails() {
       return;
     }
     if (downloadProgress !== null) return;
-    setDownloadProgress(0);
-    // Fake progress so the button feels alive
-    for (let p = 6; p <= 100; p += 8) {
-      await new Promise((r) => setTimeout(r, 70));
-      setDownloadProgress(p);
-    }
-    // Trigger an actual browser download of the source image
-    if (asset.src) {
-      try {
-        const res = await fetch(asset.src);
+    setDownloadProgress(10);
+    try {
+      const download = await recordDownload(asset.id);
+      setDownloadProgress(70);
+      if (download.url) {
+        try {
+        const res = await fetch(download.url);
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${asset.id}.${asset.format.toLowerCase()}`;
+        a.download = download.filename;
         document.body.appendChild(a);
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
-      } catch {
-        // Network may be offline — still mark success in the UI
+        } catch {
+          window.open(download.url, '_blank', 'noopener,noreferrer');
+        }
       }
+      setDownloadProgress(100);
+      toast.success('Downloaded', `${asset.displayTitle} saved to your downloads.`);
+    } catch (err) {
+      toast.error('Download failed', err instanceof Error ? err.message : undefined);
+    } finally {
+      setDownloadProgress(null);
     }
-    recordDownload(asset.id);
-    toast.success(
-      'Downloaded',
-      `${asset.displayTitle} saved to your downloads.`,
-    );
-    setTimeout(() => setDownloadProgress(null), 700);
   };
 
   const handleFavorite = (): void => {
@@ -109,7 +124,7 @@ export function AssetDetails() {
       showGate('Sign in to save this asset');
       return;
     }
-    toggle(asset.id);
+    void toggle(asset.id);
     toast[isFavorite ? 'info' : 'success'](
       isFavorite ? 'Removed from favorites' : 'Saved to favorites',
     );
@@ -168,16 +183,6 @@ export function AssetDetails() {
     }
   };
 
-  const handleReport = (): void => {
-    setMoreOpen(false);
-    toast.info('Report submitted', "We'll review this asset shortly.");
-  };
-
-  const handleHide = (): void => {
-    setMoreOpen(false);
-    toast.info('Hidden from your feed');
-  };
-
   return (
     <div className="page detail-page">
       <div className="breadcrumb">
@@ -234,12 +239,14 @@ export function AssetDetails() {
               </button>
             </div>
           </div>
-          <h2 className="similar-heading">Similar Assets</h2>
-          <div className="similar-grid">
-            {similar.map((item) => (
-              <MiniAsset asset={item} key={item.id} />
-            ))}
-          </div>
+          {similar.length > 0 && (
+            <>
+              <h2 className="similar-heading">Similar Assets</h2>
+              <div className="similar-grid">
+                {similar.map((item) => <MiniAsset asset={item} key={item.id} />)}
+              </div>
+            </>
+          )}
         </div>
 
         <aside className="detail-sidebar">
@@ -296,27 +303,6 @@ export function AssetDetails() {
               <LinkIcon size={25} />
               Copy Link
             </button>
-            <div className="action-more" ref={moreRef}>
-              <button
-                type="button"
-                onClick={() => setMoreOpen((v) => !v)}
-                aria-haspopup="menu"
-                aria-expanded={moreOpen}
-              >
-                <Ellipsis size={25} />
-                More
-              </button>
-              {moreOpen && (
-                <div className="action-more-menu" role="menu">
-                  <button type="button" onClick={handleHide}>
-                    <Trash2 size={15} /> Hide from feed
-                  </button>
-                  <button type="button" onClick={handleReport}>
-                    <Flag size={15} /> Report
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
 
           <section className="tag-panel">
@@ -328,7 +314,7 @@ export function AssetDetails() {
               AI-Generated Tags
             </h2>
             <div className="detail-tag-cloud">
-              {[...asset.tags, ...aiTags.slice(0, 6)].map((tag, index) => (
+              {asset.tags.map((tag, index) => (
                 <Link
                   key={`${tag}-${index}`}
                   to={`/search?q=${encodeURIComponent(tag)}`}

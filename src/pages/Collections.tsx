@@ -22,7 +22,6 @@ import { useFavorites } from '../stores/favorites';
 import { useNotifications } from '../stores/notifications';
 import { useLibrary } from '../stores/library';
 import { toast } from '../stores/toast';
-import { assets } from '../data/assets';
 import type { CollectionVisualClass, VisualClass } from '../types';
 import { modalSpring } from '../lib/motion';
 
@@ -86,7 +85,7 @@ export function Collections() {
 
   const totals = useMemo(
     () => ({
-      assets: assets.length + uploads.length,
+      assets: favorites.length + uploads.length,
       collections: collections.length,
       savedAssets: collections.reduce((sum, c) => sum + c.assetCount, 0),
       favorites: favorites.length,
@@ -94,13 +93,13 @@ export function Collections() {
     [collections, favorites.length, uploads.length],
   );
 
-  const submitCreate = (): void => {
+  const submitCreate = async (): Promise<void> => {
     const trimmed = name.trim();
     if (!trimmed) {
       toast.warn('Collection needs a name');
       return;
     }
-    const created = create({
+    const created = await create({
       name: trimmed,
       description,
       isPublic,
@@ -121,7 +120,7 @@ export function Collections() {
   };
 
   const handleDelete = (id: string, label: string): void => {
-    remove(id);
+    void remove(id);
     setMenuOpenId(null);
     toast.info(`${label} deleted`);
   };
@@ -130,7 +129,7 @@ export function Collections() {
     setMenuOpenId(null);
     const next = window.prompt('Rename collection', current);
     if (next && next.trim() && next.trim() !== current) {
-      rename(id, next.trim());
+      void rename(id, next.trim());
       toast.success('Collection renamed');
     }
   };
@@ -377,15 +376,15 @@ export function Collections() {
                   <button
                     type="button"
                     className="text-button"
-                    onClick={() => {
-                      const created = create({
+                    onClick={() => void (async () => {
+                      const created = await create({
                         name: 'Kente & Market — Editorial',
                         description: 'Suggested grouping based on your activity.',
                         isPublic: false,
                       });
                       toast.success('Collection drafted from your patterns');
                       navigate(`/collection/${created.id}`);
-                    }}
+                    })()}
                   >
                     <Plus size={14} /> Draft this collection
                   </button>
@@ -403,7 +402,7 @@ export function Collections() {
                 <article className="insight-card">
                   <h3>Storage opportunity</h3>
                   <p>
-                    You have 47 assets with no collection assigned. Tagging them speeds up
+                    You have {Math.max(0, totals.assets - totals.savedAssets)} assets with no collection assigned. Tagging them speeds up
                     future searches and unlocks better recommendations.
                   </p>
                   <Link to="/library" className="text-button">
@@ -478,7 +477,7 @@ export function Collections() {
                     <button
                       type="button"
                       aria-label="Upload custom cover"
-                      onClick={() => toast.info('Custom covers coming soon')}
+                      disabled
                     >
                       <ImagePlus size={24} />
                     </button>

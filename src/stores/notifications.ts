@@ -1,83 +1,45 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { apiRequest } from '../lib/api';
 
 export type NotificationTone = 'system' | 'collection' | 'social' | 'security';
-
-export interface Notification {
-  id: string;
-  tone: NotificationTone;
-  title: string;
-  body: string;
-  href?: string;
-  createdAt: number;
-  read: boolean;
-}
+export interface Notification { id: string; tone: NotificationTone; title: string; body: string; href?: string; createdAt: number; read: boolean }
 
 interface NotificationsState {
   items: Notification[];
+  hydrate: () => Promise<void>;
   push: (n: Omit<Notification, 'id' | 'createdAt' | 'read'>) => void;
   markAllRead: () => void;
   markRead: (id: string) => void;
   remove: (id: string) => void;
   unreadCount: () => number;
+  clear: () => void;
 }
 
-const seed: Notification[] = [
-  {
-    id: 'n-seed-1',
-    tone: 'system',
-    title: 'Welcome to Kontaner',
-    body: 'Your library is ready. Upload your first asset to get auto-tagging.',
-    href: '/upload',
-    createdAt: Date.now() - 1000 * 60 * 7,
-    read: false,
+export const useNotifications = create<NotificationsState>((set, get) => ({
+  items: [],
+  hydrate: async () => {
+    const result = await apiRequest<{ items: Notification[] }>('/notifications', { auth: true });
+    set({ items: result.items });
   },
-  {
-    id: 'n-seed-2',
-    tone: 'collection',
-    title: '“Kente Patterns” updated',
-    body: '3 new assets matched your saved collection criteria.',
-    href: '/collections',
-    createdAt: Date.now() - 1000 * 60 * 60 * 4,
-    read: false,
+  push: (notification) => {
+    void apiRequest('/notifications', { method: 'POST', auth: true, body: notification })
+      .then(() => get().hydrate());
   },
-  {
-    id: 'n-seed-3',
-    tone: 'social',
-    title: 'Studio Accra followed you',
-    body: 'They’ve published 12 portraits this month.',
-    createdAt: Date.now() - 1000 * 60 * 60 * 28,
-    read: true,
+  markAllRead: () => {
+    set((state) => ({ items: state.items.map((item) => ({ ...item, read: true })) }));
+    void apiRequest('/notifications/mark-all-read', { method: 'POST', auth: true });
   },
-];
-
-let counter = 0;
-const nextId = (): string => `n-${++counter}-${Date.now().toString(36)}`;
-
-export const useNotifications = create<NotificationsState>()(
-  persist(
-    (set, get) => ({
-      items: seed,
-      push: (n) =>
-        set((s) => ({
-          items: [
-            { ...n, id: nextId(), createdAt: Date.now(), read: false },
-            ...s.items,
-          ].slice(0, 40),
-        })),
-      markAllRead: () =>
-        set((s) => ({ items: s.items.map((n) => ({ ...n, read: true })) })),
-      markRead: (id) =>
-        set((s) => ({
-          items: s.items.map((n) => (n.id === id ? { ...n, read: true } : n)),
-        })),
-      remove: (id) =>
-        set((s) => ({ items: s.items.filter((n) => n.id !== id) })),
-      unreadCount: () => get().items.filter((n) => !n.read).length,
-    }),
-    { name: 'kontaner.notifications', version: 1 },
-  ),
-);
+  markRead: (id) => {
+    set((state) => ({ items: state.items.map((item) => item.id === id ? { ...item, read: true } : item) }));
+    void apiRequest(`/notifications/${encodeURIComponent(id)}`, { method: 'PATCH', auth: true, body: { read: true } });
+  },
+  remove: (id) => {
+    set((state) => ({ items: state.items.filter((item) => item.id !== id) }));
+    void apiRequest(`/notifications/${encodeURIComponent(id)}`, { method: 'DELETE', auth: true });
+  },
+  unreadCount: () => get().items.filter((item) => !item.read).length,
+  clear: () => set({ items: [] }),
+}));
 
 export function relativeTime(ts: number): string {
   const diff = Date.now() - ts;
@@ -88,6 +50,5 @@ export function relativeTime(ts: number): string {
   if (hr < 24) return `${hr} hr ago`;
   const day = Math.floor(hr / 24);
   if (day < 7) return `${day} day${day === 1 ? '' : 's'} ago`;
-  const wk = Math.floor(day / 7);
-  return `${wk} wk ago`;
+  return `${Math.floor(day / 7)} wk ago`;
 }

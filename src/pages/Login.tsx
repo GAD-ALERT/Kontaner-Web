@@ -2,6 +2,7 @@ import { Archive, CheckCircle2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../stores/auth';
+import { ApiError } from '../lib/api';
 
 interface LocationState {
   from?: string;
@@ -11,22 +12,28 @@ export function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const login = useAuth((s) => s.login);
-  const loginAsGuest = useAuth((s) => s.loginAsGuest);
 
-  const intended = (location.state as LocationState | null)?.from ?? '/';
+  const queryFrom = new URLSearchParams(location.search).get('from');
+  const requestedDestination = (location.state as LocationState | null)?.from ?? queryFrom;
+  const intended = requestedDestination?.startsWith('/') ? requestedDestination : '/';
 
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-    login(email || 'ama.serwaa@kontaner.studio');
-    navigate(intended);
-  };
-
-  const handleGuest = (): void => {
-    loginAsGuest();
-    navigate(intended);
+    setError('');
+    setSubmitting(true);
+    try {
+      await login(email, password);
+      navigate(intended);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to sign in. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -57,12 +64,13 @@ export function Login() {
         </div>
       </section>
       <section className="login-panel">
-        <form className="login-form" onSubmit={handleSubmit}>
+        <form className="login-form" onSubmit={(event) => void handleSubmit(event)}>
           <p className="eyebrow">Welcome back</p>
           <h2>Sign in to Kontaner</h2>
           <label>
             Email Address
             <input
+              required
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -75,21 +83,16 @@ export function Login() {
               <Link to="/forgot">Forgot password?</Link>
             </span>
             <input
+              required
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
             />
           </label>
-          <button className="primary-button login-submit" type="submit">
-            Sign in
-          </button>
-          <button
-            className="login-guest"
-            type="button"
-            onClick={handleGuest}
-          >
-            Continue as guest
+          {error && <p role="alert" className="form-error">{error}</p>}
+          <button className="primary-button login-submit" type="submit" disabled={submitting}>
+            {submitting ? 'Signing in…' : 'Sign in'}
           </button>
           <p className="signup-copy">
             New to Kontaner? <Link to="/signup">Create an account</Link>

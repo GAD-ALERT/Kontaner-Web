@@ -24,10 +24,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { AssetCard } from '../components/AssetCard';
 import { SkeletonAssetGrid } from '../components/Skeleton';
-import { assets, collections, featuredCreators } from '../data/assets';
-import { useFakeLoad } from '../hooks/useFakeLoad';
 import { gridContainer, gridItem, heroItem } from '../lib/motion';
-import type { AssetType } from '../types';
+import { apiRequest } from '../lib/api';
+import type { Asset, AssetListResponse, AssetType } from '../types';
+import { useCollections } from '../stores/collections';
 
 interface CategoryCard {
   label: string;
@@ -58,11 +58,16 @@ type LicenseTier = 'all' | 'free' | 'premium';
 
 export function Discover() {
   const navigate = useNavigate();
-  const loading = useFakeLoad(550);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [query, setQuery] = useState<string>('');
   const [activeCategory, setActiveCategory] = useState<AssetType | 'ALL'>('ALL');
   const [licenseTier, setLicenseTier] = useState<LicenseTier>('all');
-  const [visibleCount, setVisibleCount] = useState<number>(12);
+  const collections = useCollections((state) => state.collections);
 
   const submit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -73,28 +78,57 @@ export function Discover() {
 
   const trending = useMemo(
     () => [...assets].sort((a, b) => (b.likes ?? 0) - (a.likes ?? 0)).slice(0, 8),
-    [],
+    [assets],
   );
-
-  const filteredAssets = useMemo(() => {
-    return assets.filter((a) => {
-      if (activeCategory !== 'ALL' && a.type !== activeCategory) return false;
-      if (licenseTier === 'free' && a.premium) return false;
-      if (licenseTier === 'premium' && !a.premium) return false;
-      return true;
-    });
-  }, [activeCategory, licenseTier]);
-
-  const browseAssets = useMemo(
-    () => filteredAssets.slice(0, visibleCount),
-    [filteredAssets, visibleCount],
-  );
-
-  const hasMore = browseAssets.length < filteredAssets.length;
+  const featuredCreators = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const asset of assets) counts.set(asset.owner, (counts.get(asset.owner) ?? 0) + 1);
+    return Array.from(counts.entries()).slice(0, 6).map(([name, assetCount], index) => ({
+      id: name, name, handle: `@${name.toLowerCase().replace(/[^a-z0-9]+/g, '')}`,
+      assetCount, initials: name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase(),
+      accent: (['green', 'blue', 'gold', 'red'] as const)[index % 4],
+    }));
+  }, [assets]);
 
   useEffect(() => {
-    setVisibleCount(12);
-  }, [activeCategory, licenseTier]);
+    const controller = new AbortController();
+    const load = async (): Promise<void> => {
+      setLoading(true);
+      setError('');
+      const params = new URLSearchParams({
+        page: String(page), pageSize: '12', tier: licenseTier, sort: 'new',
+      });
+      if (activeCategory !== 'ALL') params.set('type', activeCategory);
+      try {
+        const result = await apiRequest<AssetListResponse>(`/assets?${params}`, {
+          signal: controller.signal,
+        });
+        setAssets((current) => page === 1 ? result.items : [...current, ...result.items]);
+        setTotal(result.total);
+        setHasMore(result.hasMore);
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          setError(err instanceof Error ? err.message : 'Unable to load assets.');
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    void load();
+    return () => controller.abort();
+  }, [activeCategory, licenseTier, page]);
+
+  const selectCategory = (filter: AssetType | 'ALL'): void => {
+    setAssets([]);
+    setPage(1);
+    setActiveCategory(filter);
+  };
+
+  const selectTier = (tier: LicenseTier): void => {
+    setAssets([]);
+    setPage(1);
+    setLicenseTier(tier);
+  };
 
   return (
     <div className="discover-v2">
@@ -173,7 +207,7 @@ export function Discover() {
             className={`category-mega-card ${accent} ${
               activeCategory === filter ? 'active' : ''
             }`}
-            onClick={() => setActiveCategory(filter)}
+            onClick={() => selectCategory(filter)}
           >
             <span className="category-mega-icon">
               <Icon size={26} />
@@ -264,7 +298,7 @@ export function Discover() {
           <div>
             <h2>Browse the library</h2>
             <p>
-              {browseAssets.length} assets
+              {total} assets
               {activeCategory !== 'ALL' && ` in ${activeCategory.toLowerCase()}`}
             </p>
           </div>
@@ -274,7 +308,7 @@ export function Discover() {
               role="tab"
               aria-selected={licenseTier === 'all'}
               className={licenseTier === 'all' ? 'active' : ''}
-              onClick={() => setLicenseTier('all')}
+              onClick={() => selectTier('all')}
             >
               All
             </button>
@@ -283,7 +317,7 @@ export function Discover() {
               role="tab"
               aria-selected={licenseTier === 'free'}
               className={licenseTier === 'free' ? 'active' : ''}
-              onClick={() => setLicenseTier('free')}
+              onClick={() => selectTier('free')}
             >
               Free
             </button>
@@ -292,7 +326,7 @@ export function Discover() {
               role="tab"
               aria-selected={licenseTier === 'premium'}
               className={licenseTier === 'premium' ? 'active' : ''}
-              onClick={() => setLicenseTier('premium')}
+              onClick={() => selectTier('premium')}
             >
               <span className="license-toggle-crown">★</span>
               Premium
@@ -306,16 +340,22 @@ export function Discover() {
           animate={loading ? 'hidden' : 'visible'}
           key={`${activeCategory}-${licenseTier}`}
         >
-          {loading ? (
+          {loading && assets.length === 0 ? (
             <SkeletonAssetGrid count={8} />
-          ) : browseAssets.length === 0 ? (
+          ) : error && assets.length === 0 ? (
+            <div className="browse-empty" role="alert">
+              <ImageIcon size={42} />
+              <h3>We couldn't load the library</h3>
+              <p>{error}</p>
+            </div>
+          ) : assets.length === 0 ? (
             <div className="browse-empty">
               <ImageIcon size={42} />
               <h3>Nothing matches those filters yet</h3>
               <p>Try a different category or license tier.</p>
             </div>
           ) : (
-            browseAssets.map((asset) => (
+            assets.map((asset) => (
               <motion.div key={asset.id} variants={gridItem}>
                 <AssetCard asset={asset} />
               </motion.div>
@@ -323,17 +363,18 @@ export function Discover() {
           )}
         </motion.div>
 
-        {!loading && hasMore && (
+        {hasMore && (
           <div className="browse-pagination">
             <button
               type="button"
               className="secondary-button"
-              onClick={() => setVisibleCount((c) => c + 12)}
+              onClick={() => setPage((current) => current + 1)}
+              disabled={loading}
             >
-              Load more assets
+              {loading ? 'Loading…' : 'Load more assets'}
             </button>
             <span className="browse-pagination-count">
-              Showing {browseAssets.length} of {filteredAssets.length}
+              Showing {assets.length} of {total}
             </span>
           </div>
         )}

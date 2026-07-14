@@ -1,12 +1,13 @@
-import { Search, Sparkles, SlidersHorizontal, X, ZoomOut } from 'lucide-react';
+import { Search, Sparkles, X, ZoomOut } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { SkeletonAssetGrid } from '../components/Skeleton';
-import { assets } from '../data/assets';
 import { useFavorites } from '../stores/favorites';
-import { smartSearch, relatedTags, type SearchHit } from '../lib/search';
+import { relatedTags, type SearchHit } from '../lib/search';
 import { gridContainer, gridItem } from '../lib/motion';
+import { apiRequest } from '../lib/api';
+import type { AssetListResponse, AssetType, SearchResponse } from '../types';
 
 type ResultTab = 'library' | 'discover';
 
@@ -21,9 +22,12 @@ const popularQueries: readonly string[] = [
 
 export function SearchResults() {
   const [params, setParams] = useSearchParams();
-  const navigate = useNavigate();
   const query = params.get('q') ?? '';
   const normalized = query.trim();
+  const type = (params.get('type') ?? '') as AssetType | '';
+  const tier = params.get('tier') ?? 'all';
+  const sort = params.get('sort') ?? 'relevance';
+  const page = Math.max(1, Number(params.get('page') ?? 1));
   const favoriteIds = useFavorites((s) => s.ids);
 
   const clearQuery = (): void => {
@@ -34,18 +38,55 @@ export function SearchResults() {
 
   const [tab, setTab] = useState<ResultTab>('discover');
   const [loading, setLoading] = useState<boolean>(true);
+  const [allHits, setAllHits] = useState<SearchHit[]>([]);
+  const [searchMode, setSearchMode] = useState<'semantic' | 'text' | 'browse'>('browse');
+  const [error, setError] = useState('');
+  const [total, setTotal] = useState(0);
+
+  const setFilter = (key: string, value: string): void => {
+    const next = new URLSearchParams(params);
+    if (!value || value === 'all' || (key === 'sort' && value === 'relevance')) next.delete(key);
+    else next.set(key, value);
+    next.delete('page');
+    setParams(next);
+  };
 
   useEffect(() => {
-    setLoading(true);
-    // Pretend the AI is thinking — feels more credible at demo time.
-    const t = window.setTimeout(() => setLoading(false), 650);
-    return () => window.clearTimeout(t);
-  }, [normalized]);
-
-  const allHits: SearchHit[] = useMemo(
-    () => (normalized ? smartSearch(normalized, assets) : assets.map((a) => ({ asset: a, score: 0, matched: [] }))),
-    [normalized],
-  );
+    const controller = new AbortController();
+    const run = async (): Promise<void> => {
+      setLoading(true);
+      setError('');
+      try {
+        if (normalized) {
+          const searchParams = new URLSearchParams({ q: normalized, page: String(page), pageSize: '24', tier, sort });
+          if (type) searchParams.set('type', type);
+          const result = await apiRequest<SearchResponse>(`/assets/search?${searchParams}`, { signal: controller.signal });
+          const terms = normalized.toLowerCase().split(/\s+/).filter(Boolean);
+          const nextHits = result.items.map((asset) => ({
+            asset, score: (asset.relevance ?? 0) * 100,
+            matched: terms.filter((term) => asset.tags.some((tag) => tag.toLowerCase().includes(term))),
+          }));
+          setAllHits((current) => page === 1 ? nextHits : [...current, ...nextHits]);
+          setTotal(result.total);
+          setSearchMode(result.mode);
+        } else {
+          const browseParams = new URLSearchParams({ page: String(page), pageSize: '24', tier, sort: sort === 'relevance' ? 'popular' : sort });
+          if (type) browseParams.set('type', type);
+          const result = await apiRequest<AssetListResponse>(`/assets?${browseParams}`, { signal: controller.signal });
+          const nextHits = result.items.map((asset) => ({ asset, score: 0, matched: [] }));
+          setAllHits((current) => page === 1 ? nextHits : [...current, ...nextHits]);
+          setTotal(result.total);
+          setSearchMode('browse');
+        }
+      } catch (err) {
+        if (!controller.signal.aborted) setError(err instanceof Error ? err.message : 'Search failed.');
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    void run();
+    return () => controller.abort();
+  }, [normalized, page, sort, tier, type]);
 
   const libraryHits = useMemo(
     () => allHits.filter((h) => favoriteIds.includes(h.asset.id)),
@@ -64,13 +105,13 @@ export function SearchResults() {
           {!normalized
             ? 'Browse the entire library'
             : hasResults
-              ? `${hits.length} results for '${query}'`
+              ? `${tab === 'discover' ? total : hits.length} results for '${query}'`
               : `No results for '${query}'`}
         </h1>
         <p className="search-intro-line">
           <Sparkles size={15} />
           {normalized
-            ? `Ranked by semantic relevance · top match scored ${Math.round(topScore * 10) / 10}`
+            ? `Ranked by ${searchMode === 'semantic' ? 'semantic' : 'text'} relevance · top match scored ${Math.round(topScore * 10) / 10}`
             : 'Found in your personal library and creative collections.'}
         </p>
       </section>
@@ -108,14 +149,15 @@ export function SearchResults() {
       </div>
 
       <div className="result-filter-row">
-        <button
-          className="secondary-button small"
-          type="button"
-          onClick={() => navigate('/')}
-        >
-          <SlidersHorizontal size={16} />
-          All Filters
-        </button>
+        <select aria-label="Asset type" value={type} onChange={(event) => setFilter('type', event.target.value)}>
+          <option value="">All types</option><option value="PHOTO">Photos</option><option value="VIDEO">Videos</option><option value="GRAPHIC">Graphics</option><option value="3D">3D</option>
+        </select>
+        <select aria-label="License tier" value={tier} onChange={(event) => setFilter('tier', event.target.value)}>
+          <option value="all">All licenses</option><option value="free">Free</option><option value="premium">Premium</option>
+        </select>
+        <select aria-label="Sort results" value={sort} onChange={(event) => setFilter('sort', event.target.value)}>
+          <option value="relevance">Relevance</option><option value="popular">Most liked</option><option value="trending">Most downloaded</option><option value="new">Newest</option>
+        </select>
         {normalized && (
           <button
             className="filter-token"
@@ -132,7 +174,7 @@ export function SearchResults() {
             type="button"
             onClick={() => {
               setTab('discover');
-              clearQuery();
+              setParams({}, { replace: true });
             }}
           >
             Clear all
@@ -149,6 +191,11 @@ export function SearchResults() {
           <section className="masonry-results loading">
             <SkeletonAssetGrid count={6} />
           </section>
+        </section>
+      ) : error ? (
+        <section className="empty-state" role="alert">
+          <h2>Search unavailable</h2>
+          <p>{error}</p>
         </section>
       ) : hasResults ? (
         <motion.section
@@ -223,6 +270,14 @@ export function SearchResults() {
             ))}
           </div>
         </section>
+      )}
+      {!loading && allHits.length < total && (
+        <div className="browse-pagination">
+          <button className="secondary-button" type="button" onClick={() => {
+            const next = new URLSearchParams(params); next.set('page', String(page + 1)); setParams(next);
+          }}>Load more results</button>
+          <span>Showing {allHits.length} of {total}</span>
+        </div>
       )}
     </div>
   );

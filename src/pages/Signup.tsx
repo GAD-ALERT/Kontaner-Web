@@ -2,6 +2,7 @@ import { Archive, CheckCircle2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../stores/auth';
+import { ApiError } from '../lib/api';
 
 const roles = [
   'Visual Designer',
@@ -19,11 +20,21 @@ export function Signup() {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [role, setRole] = useState<string>(roles[0]);
+  const [error, setError] = useState<string>('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-    signup({ name, email, role });
-    navigate('/');
+    setError('');
+    setSubmitting(true);
+    try {
+      await signup({ name, email, password, role });
+      navigate('/');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to create your account.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -58,7 +69,7 @@ export function Signup() {
         </div>
       </section>
       <section className="login-panel">
-        <form className="login-form" onSubmit={handleSubmit}>
+        <form className="login-form" onSubmit={(event) => void handleSubmit(event)}>
           <p className="eyebrow">Get started free</p>
           <h2>Create your Kontaner account</h2>
           <label>
@@ -88,7 +99,7 @@ export function Signup() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              minLength={6}
+              minLength={8}
             />
           </label>
           <label>
@@ -99,8 +110,9 @@ export function Signup() {
               ))}
             </select>
           </label>
-          <button className="primary-button login-submit" type="submit">
-            Create account
+          {error && <p role="alert" className="form-error">{error}</p>}
+          <button className="primary-button login-submit" type="submit" disabled={submitting}>
+            {submitting ? 'Creating account…' : 'Create account'}
           </button>
           <p className="signup-copy">
             Already have one? <Link to="/login">Sign in</Link>

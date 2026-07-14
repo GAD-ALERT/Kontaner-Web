@@ -33,7 +33,7 @@ export function AssetCard({ asset, size = 'normal' }: AssetCardProps) {
       showGate('Sign in to save assets');
       return;
     }
-    toggle(asset.id);
+    void toggle(asset.id);
   };
 
   return (

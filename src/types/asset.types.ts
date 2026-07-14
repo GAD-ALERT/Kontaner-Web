@@ -15,8 +15,7 @@ export type AssetFormat =
   | 'WEBP';
 
 /**
- * CSS visual gradient class identifier used to render mock thumbnails
- * via the `visual-*` rules defined in `styles.css`.
+ * CSS visual class returned by the asset service.
  */
 export type VisualClass =
   | 'visual-kente'
@@ -54,6 +53,7 @@ export interface Asset {
   premium?: boolean;
   likes?: number;
   downloads?: number;
+  aiInsight?: string | null;
   aspectRatio?: AspectRatio;
   /** Public-relative path to the bundled image. Populated in Day 3. */
   src?: string;

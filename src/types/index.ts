@@ -16,4 +16,16 @@ export type {
 
 export type { Route } from './navigation.types';
 
-export type { UploadResponse, ApiErrorPayload } from './api.types';
+export type {
+  UploadResponse,
+  ApiErrorPayload,
+  ApiUser,
+  AuthResponse,
+  UserResponse,
+  AssetResponse,
+  AssetListResponse,
+  SearchAsset,
+  SearchResponse,
+  NotificationPreferences,
+  StorageUsage,
+} from './api.types';
