@@ -48,6 +48,7 @@ export interface Asset {
   size: string;
   date: string;
   owner: string;
+  creatorId?: string | null;
   visual: VisualClass;
   tags: string[];
   premium?: boolean;
@@ -72,10 +73,13 @@ export interface Collection {
 export interface Creator {
   id: string;
   name: string;
-  handle: string;
+  role: string;
+  bio: string;
+  location: string;
+  avatarUrl: string;
+  avatarInitials: string;
+  memberSince: string;
   assetCount: number;
-  initials: string;
-  accent: 'green' | 'blue' | 'gold' | 'red';
 }
 
 /** An AI-generated descriptive tag. */

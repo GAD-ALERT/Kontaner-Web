@@ -28,4 +28,7 @@ export type {
   SearchResponse,
   NotificationPreferences,
   StorageUsage,
+  PublicCollection,
+  CreatorListResponse,
+  CreatorDetailResponse,
 } from './api.types';

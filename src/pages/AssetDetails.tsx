@@ -252,7 +252,9 @@ export function AssetDetails() {
         <aside className="detail-sidebar">
           <h1>{asset.displayTitle}</h1>
           <p className="upload-meta">
-            Uploaded by {asset.owner} · {asset.date}
+            Uploaded by {asset.creatorId
+              ? <Link to={`/creator/${asset.creatorId}`}>{asset.owner}</Link>
+              : asset.owner} · {asset.date}
           </p>
           <button
             className="primary-button wide"

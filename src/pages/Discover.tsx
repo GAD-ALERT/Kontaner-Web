@@ -4,7 +4,6 @@ import {
   Camera,
   ChevronRight,
   Film,
-  Grid2X2,
   Image as ImageIcon,
   Palette,
   Search,
@@ -26,23 +25,20 @@ import { AssetCard } from '../components/AssetCard';
 import { SkeletonAssetGrid } from '../components/Skeleton';
 import { gridContainer, gridItem, heroItem } from '../lib/motion';
 import { apiRequest } from '../lib/api';
-import type { Asset, AssetListResponse, AssetType } from '../types';
-import { useCollections } from '../stores/collections';
+import type { Asset, AssetListResponse, AssetType, Creator, CreatorListResponse, PublicCollection } from '../types';
 
 interface CategoryCard {
   label: string;
   icon: LucideIcon;
-  count: string;
   filter: AssetType | 'ALL';
   accent: 'green' | 'blue' | 'gold' | 'red' | 'mint';
 }
 
 const categories: readonly CategoryCard[] = [
-  { label: 'Photos', icon: Camera, count: '32,408', filter: 'PHOTO', accent: 'green' },
-  { label: 'Videos', icon: Film, count: '3,108', filter: 'VIDEO', accent: 'blue' },
-  { label: 'Illustrations', icon: Palette, count: '8,742', filter: 'GRAPHIC', accent: 'gold' },
-  { label: '3D Models', icon: Box, count: '1,204', filter: '3D', accent: 'red' },
-  { label: 'Patterns', icon: Grid2X2, count: '5,318', filter: 'ALL', accent: 'mint' },
+  { label: 'Photos', icon: Camera, filter: 'PHOTO', accent: 'green' },
+  { label: 'Videos', icon: Film, filter: 'VIDEO', accent: 'blue' },
+  { label: 'Illustrations', icon: Palette, filter: 'GRAPHIC', accent: 'gold' },
+  { label: '3D Models', icon: Box, filter: '3D', accent: 'red' },
 ] as const;
 
 const trendingTags: readonly string[] = [
@@ -67,7 +63,9 @@ export function Discover() {
   const [query, setQuery] = useState<string>('');
   const [activeCategory, setActiveCategory] = useState<AssetType | 'ALL'>('ALL');
   const [licenseTier, setLicenseTier] = useState<LicenseTier>('all');
-  const collections = useCollections((state) => state.collections);
+  const [collections, setCollections] = useState<PublicCollection[]>([]);
+  const [featuredCreators, setFeaturedCreators] = useState<Creator[]>([]);
+  const [stats, setStats] = useState<{ total: number; downloads: number; creators: number; byType: Array<{ type: string; count: number }> }>({ total: 0, downloads: 0, creators: 0, byType: [] });
 
   const submit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -80,15 +78,20 @@ export function Discover() {
     () => [...assets].sort((a, b) => (b.likes ?? 0) - (a.likes ?? 0)).slice(0, 8),
     [assets],
   );
-  const featuredCreators = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const asset of assets) counts.set(asset.owner, (counts.get(asset.owner) ?? 0) + 1);
-    return Array.from(counts.entries()).slice(0, 6).map(([name, assetCount], index) => ({
-      id: name, name, handle: `@${name.toLowerCase().replace(/[^a-z0-9]+/g, '')}`,
-      assetCount, initials: name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase(),
-      accent: (['green', 'blue', 'gold', 'red'] as const)[index % 4],
-    }));
-  }, [assets]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.all([
+      apiRequest<{ items: PublicCollection[] }>('/collections/public', { signal: controller.signal }),
+      apiRequest<CreatorListResponse>('/creators', { signal: controller.signal }),
+      apiRequest<typeof stats>('/assets/stats', { signal: controller.signal }),
+    ]).then(([collectionResult, creatorResult, statsResult]) => {
+      setCollections(collectionResult.items);
+      setFeaturedCreators(creatorResult.items);
+      setStats(statsResult);
+    }).catch(() => undefined);
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -183,16 +186,16 @@ export function Discover() {
           </motion.div>
           <motion.div className="hero-v2-stats" variants={heroItem} custom={4}>
             <div>
-              <strong>50K+</strong>
+              <strong>{stats.total.toLocaleString()}</strong>
               <span>Creative assets</span>
             </div>
             <div>
-              <strong>500+</strong>
+              <strong>{stats.creators.toLocaleString()}</strong>
               <span>Ghanaian creators</span>
             </div>
             <div>
-              <strong>120K+</strong>
-              <span>Downloads / month</span>
+              <strong>{stats.downloads.toLocaleString()}</strong>
+              <span>Total downloads</span>
             </div>
           </motion.div>
         </motion.div>
@@ -200,7 +203,7 @@ export function Discover() {
 
       {/* CATEGORY MEGA-STRIP */}
       <section className="category-mega">
-        {categories.map(({ label, icon: Icon, count, filter, accent }) => (
+        {categories.map(({ label, icon: Icon, filter, accent }) => (
           <button
             key={label}
             type="button"
@@ -213,7 +216,7 @@ export function Discover() {
               <Icon size={26} />
             </span>
             <span className="category-mega-label">{label}</span>
-            <span className="category-mega-count">{count}</span>
+            <span className="category-mega-count">{(stats.byType.find((item) => item.type === filter)?.count ?? 0).toLocaleString()}</span>
           </button>
         ))}
       </section>
@@ -268,10 +271,10 @@ export function Discover() {
       <section className="discover-section">
         <div className="discover-section-head">
           <div>
-            <h2>Featured collections</h2>
-            <p>Curated sets to start your project from.</p>
+            <h2>Public collections</h2>
+            <p>Recently updated sets shared by Kontaner creators.</p>
           </div>
-          <Link to="/collections" className="text-button">
+          <Link to="/search" className="text-button">
             All collections
             <ChevronRight size={16} />
           </Link>
@@ -280,7 +283,7 @@ export function Discover() {
           {collections.map((c) => (
             <Link
               key={c.id}
-              to={`/search?q=${encodeURIComponent(c.name)}`}
+              to={`/public-collection/${c.id}`}
               className={`collection-strip-card ${c.visual}`}
             >
               <div className="collection-strip-meta">
@@ -388,20 +391,20 @@ export function Discover() {
               <Users size={22} />
               Featured creators
             </h2>
-            <p>Hand-picked studios and photographers from across Ghana.</p>
+            <p>Creators currently publishing assets on Kontaner.</p>
           </div>
         </div>
         <div className="creator-strip">
           {featuredCreators.map((c) => (
             <Link
               key={c.id}
-              to={`/search?q=${encodeURIComponent(c.name)}`}
+              to={`/creator/${c.id}`}
               className="creator-card"
             >
-              <span className={`creator-avatar ${c.accent}`}>{c.initials}</span>
+              <span className="creator-avatar green">{c.avatarUrl ? <img src={c.avatarUrl} alt="" /> : c.avatarInitials}</span>
               <div>
                 <strong>{c.name}</strong>
-                <span>{c.handle}</span>
+                <span>{c.role}</span>
                 <p>{c.assetCount} assets</p>
               </div>
             </Link>

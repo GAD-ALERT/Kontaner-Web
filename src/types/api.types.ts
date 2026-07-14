@@ -3,6 +3,7 @@
  */
 
 import type { Asset } from './asset.types';
+import type { CollectionVisualClass, Creator } from './asset.types';
 
 export interface ApiUser {
   id: string;
@@ -31,6 +32,20 @@ export interface StorageUsage {
   assetCount: number;
   breakdown: Array<{ type: string; bytes: number; count: number }>;
 }
+export interface PublicCollection {
+  id: string;
+  name: string;
+  description: string;
+  visual: CollectionVisualClass;
+  isPublic: true;
+  assetCount: number;
+  updated: string;
+  createdAt: number;
+  assetIds: string[];
+  creator: { id: string; name: string; avatarUrl: string; initials: string };
+}
+export interface CreatorListResponse { items: Creator[] }
+export interface CreatorDetailResponse { creator: Creator; items: Asset[] }
 
 export interface AuthResponse { token: string; user: ApiUser }
 export interface UserResponse { user: ApiUser }

@@ -14,6 +14,8 @@ import { LegalPage } from '../pages/LegalPage';
 import { Upload } from '../pages/Upload';
 import { AccountSettings } from '../pages/AccountSettings';
 import { ProtectedRoute } from './ProtectedRoute';
+import { CreatorProfile } from '../pages/CreatorProfile';
+import { PublicCollection } from '../pages/PublicCollection';
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +26,8 @@ export const router = createBrowserRouter([
       { path: 'search', element: <SearchResults /> },
       { path: 'asset/:id', element: <AssetDetails /> },
       { path: 'legal/:slug', element: <LegalPage /> },
+      { path: 'creator/:id', element: <CreatorProfile /> },
+      { path: 'public-collection/:id', element: <PublicCollection /> },
       {
         path: 'library',
         element: (
