@@ -1,16 +1,6 @@
-import {
-  Bell,
-  Camera,
-  Cloud,
-  CreditCard,
-  MapPin,
-  ShieldCheck,
-  UserRound,
-  WalletCards,
-  type LucideIcon,
-} from 'lucide-react';
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { motion } from 'motion/react';
+import { Icon } from '../components/Icon';
 import { useAuth } from '../stores/auth';
 import { useLibrary } from '../stores/library';
 import { useFavorites } from '../stores/favorites';
@@ -25,15 +15,15 @@ type SettingsTab = 'profile' | 'account' | 'notifications' | 'storage' | 'billin
 interface SettingsItem {
   id: SettingsTab;
   label: string;
-  icon: LucideIcon;
+  icon: string;
 }
 
 const items: readonly SettingsItem[] = [
-  { id: 'profile', label: 'Profile', icon: UserRound },
-  { id: 'account', label: 'Account', icon: WalletCards },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'storage', label: 'Storage', icon: Cloud },
-  { id: 'billing', label: 'Billing', icon: CreditCard },
+  { id: 'profile', label: 'Profile', icon: 'person' },
+  { id: 'account', label: 'Account', icon: 'wallet' },
+  { id: 'notifications', label: 'Notifications', icon: 'notifications' },
+  { id: 'storage', label: 'Storage', icon: 'cloud' },
+  { id: 'billing', label: 'Billing', icon: 'credit_card' },
 ] as const;
 
 export function AccountSettings() {
@@ -108,14 +98,14 @@ export function AccountSettings() {
       <aside className="settings-sidebar">
         <section className="settings-menu">
           <h2>Settings</h2>
-          {items.map(({ id, label, icon: Icon }) => (
+          {items.map(({ id, label, icon }) => (
             <button
               key={id}
               className={tab === id ? 'active' : ''}
               type="button"
               onClick={() => setTab(id)}
             >
-              <Icon size={22} />
+              <Icon name={icon} size={20} filled={tab === id} />
               {label}
             </button>
           ))}
@@ -141,11 +131,16 @@ export function AccountSettings() {
                     {avatarUrl ? (
                       <img src={avatarUrl} alt="Profile" />
                     ) : (
-                      <span>{user?.avatarInitials ?? 'AM'}</span>
+                      <Icon name="person" size={56} filled />
                     )}
                   </div>
-                  <button type="button" aria-label="Upload profile photo" disabled={avatarUploading} onClick={() => avatarInput.current?.click()}>
-                    <Camera size={18} />
+                  <button
+                    type="button"
+                    aria-label="Upload profile photo"
+                    disabled={avatarUploading}
+                    onClick={() => avatarInput.current?.click()}
+                  >
+                    <Icon name="edit" size={20} />
                   </button>
                   <input ref={avatarInput} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void handleAvatar(event)} />
                 </div>
@@ -187,7 +182,7 @@ export function AccountSettings() {
                   <label className="location-field">
                     Location
                     <span>
-                      <MapPin size={18} />
+                      <Icon name="location_on" size={20} />
                       <input
                         value={location}
                         onChange={(e) => markDirty(setLocation)(e.target.value)}
@@ -223,7 +218,7 @@ export function AccountSettings() {
                     <dt>Two-factor auth</dt>
                     <dd>
                       <span className="status-pill ok">
-                        <ShieldCheck size={13} /> Not configured
+                        <Icon name="verified_user" size={16} /> Not configured
                       </span>
                     </dd>
                   </div>
@@ -259,7 +254,7 @@ export function AccountSettings() {
               <section className="storage-card">
                 <div className="section-heading">
                   <h2>
-                    <Cloud size={24} />
+                    <Icon name="cloud" size={24} />
                     Storage Overview
                   </h2>
                 </div>
@@ -271,8 +266,7 @@ export function AccountSettings() {
                   <div className="storage-details">
                     <div className="usage-bar">
                       <span className="images" />
-                      <span className="videos" />
-                      <span className="docs" />
+                      <span className="illustrations" />
                       <span className="other" />
                     </div>
                     <div className="legend">
@@ -292,7 +286,7 @@ export function AccountSettings() {
                     <h3>Activity summary</h3>
                     <p>{storage ? `${formatStorage(storage.usedBytes)} of ${formatStorage(storage.quotaBytes)} used · ${formatStorage(storage.remainingBytes)} remaining` : 'Loading storage usage…'}</p>
                     <article className="file-row">
-                      <Camera size={22} />
+                      <Icon name="cloud_upload" size={24} />
                       <div>
                         <strong>{uploads.length} uploads</strong>
                         <p>{downloads.length} downloads this period</p>
@@ -300,7 +294,7 @@ export function AccountSettings() {
                       <span>{collections.length} collections</span>
                     </article>
                     <article className="file-row">
-                      <Camera size={22} />
+                      <Icon name="bookmark" size={24} />
                       <div>
                         <strong>{favorites.length} favorited assets</strong>
                         <p>Backed up across all devices</p>

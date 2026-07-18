@@ -1,5 +1,5 @@
 :root {
-  --bg: #f5fcf7;
+  --bg: #f5fbf5;
   --panel: #ffffff;
   --panel-soft: #eef7f1;
   --panel-muted: #e6efe9;
@@ -16,6 +16,18 @@
   --gold: #efb91a;
   --red: #c63a36;
   --shadow: 0 8px 22px rgba(27, 48, 38, 0.08);
+
+  /* Radius scale — the only four values used app-wide */
+  --r-sm: 8px;   /* small controls, chips, thumbs   */
+  --r-md: 12px;  /* cards, inputs, buttons          */
+  --r-lg: 16px;  /* large surfaces, modals, heroes  */
+  --r-full: 999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --dur-micro: 150ms;
+  --dur-page: 220ms;
+
   color: var(--ink);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
@@ -30,7 +42,55 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #f5fbf5;
+  background: var(--bg);
+}
+
+/* ── Icons: Google Material Symbols Rounded ─────────────────
+   Rendered through <Icon />. Variation axes are driven by
+   custom properties so size and fill compose predictably.   */
+.msr {
+  --msr-fill: 0;
+  --msr-wght: 400;
+  --msr-opsz: 24;
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  display: inline-block;
+  flex-shrink: 0;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings:
+    'FILL' var(--msr-fill),
+    'wght' var(--msr-wght),
+    'GRAD' 0,
+    'opsz' var(--msr-opsz);
+}
+
+/* Optical sizing: smaller glyphs get a slightly heavier weight
+   and tighter optical size so strokes hold up at small sizes. */
+.msr-16 { font-size: 16px; --msr-wght: 500; --msr-opsz: 20; }
+.msr-20 { font-size: 20px; --msr-wght: 450; --msr-opsz: 20; }
+.msr-24 { font-size: 24px; }
+.msr-32 { font-size: 32px; }
+.msr-40 { font-size: 40px; }
+.msr-56 { font-size: 56px; --msr-wght: 300; --msr-opsz: 48; }
+
+.msr-filled { --msr-fill: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 button,
@@ -591,19 +651,6 @@ p {
   height: 230px;
   position: relative;
   overflow: hidden;
-}
-
-.asset-type {
-  position: absolute;
-  left: 16px;
-  bottom: 14px;
-  z-index: 2;
-  color: white;
-  background: rgba(29, 36, 32, 0.45);
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 800;
 }
 
 .bookmark-button {
@@ -1223,7 +1270,7 @@ p {
 
 .tag-panel {
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: var(--r-md);
   padding: 24px;
   background: #f4fbf6;
 }
@@ -1277,21 +1324,6 @@ p {
 .dominant-colors {
   margin-top: 34px;
 }
-
-.dominant-colors > div {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  height: 48px;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.tone.teal { background: #24a37d; }
-.tone.blue { background: #216aa9; }
-.tone.yellow { background: #efb91a; }
-.tone.charcoal { background: #435149; }
-.tone.pale { background: #f2fbf6; }
 
 .collections-page {
   width: 100%;
@@ -1795,9 +1827,8 @@ p {
   display: flex;
 }
 
-.usage-bar .images { width: 51%; background: var(--green); }
-.usage-bar .videos { width: 21%; background: var(--blue); }
-.usage-bar .docs { width: 9%; background: #9b413c; }
+.usage-bar .images { width: 66%; background: var(--green); }
+.usage-bar .illustrations { width: 22%; background: var(--blue); }
 .usage-bar .other { flex: 1; background: #b9c8bf; }
 
 .legend {
@@ -1821,8 +1852,8 @@ p {
 }
 
 .legend .images { background: var(--green); }
-.legend .videos { background: var(--blue); }
-.legend .docs { background: #9b413c; }
+.legend .illustrations { background: var(--blue); }
+.legend .other { background: #b9c8bf; }
 
 .file-row {
   min-height: 54px;

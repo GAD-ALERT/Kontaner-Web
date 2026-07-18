@@ -1,10 +1,10 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { Check, FolderPlus, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { useCollections } from '../stores/collections';
 import { useNotifications } from '../stores/notifications';
 import { toast } from '../stores/toast';
 import { modalSpring } from '../lib/motion';
+import { Icon } from './Icon';
 
 interface Props {
   open: boolean;
@@ -89,7 +89,7 @@ export function AddToCollectionModal({ open, assetId, assetTitle, onClose }: Pro
                 <p>{assetTitle ?? 'Pick a collection or create a new one.'}</p>
               </div>
               <button type="button" onClick={onClose} aria-label="Close">
-                <X size={20} />
+                <Icon name="close" size={20} />
               </button>
             </header>
 
@@ -109,7 +109,7 @@ export function AddToCollectionModal({ open, assetId, assetTitle, onClose }: Pro
                         <span>{c.assetCount} assets · {c.updated}</span>
                       </span>
                       <span className="add-collection-check" aria-hidden="true">
-                        {included ? <Check size={16} /> : <Plus size={16} />}
+                        <Icon name={included ? 'check' : 'add'} size={16} />
                       </span>
                     </button>
                   </li>
@@ -159,7 +159,7 @@ export function AddToCollectionModal({ open, assetId, assetTitle, onClose }: Pro
                 className="add-collection-new"
                 onClick={() => setCreating(true)}
               >
-                <FolderPlus size={18} />
+                <Icon name="create_new_folder" size={20} />
                 New collection
               </button>
             )}

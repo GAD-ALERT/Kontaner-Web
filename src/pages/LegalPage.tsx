@@ -1,8 +1,8 @@
-import { ArrowLeft, FileText, LifeBuoy, Lock, Scale } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
+import { Icon } from '../components/Icon';
 
 interface LegalCopy {
-  icon: typeof FileText;
+  icon: string;
   title: string;
   intro: string;
   sections: { title: string; body: string }[];
@@ -10,7 +10,7 @@ interface LegalCopy {
 
 const pages: Record<string, LegalCopy> = {
   licensing: {
-    icon: Scale,
+    icon: 'balance',
     title: 'Licensing',
     intro:
       'Every asset on Kontaner is governed by one of three license tiers. Use this page as a quick reference when planning a campaign.',
@@ -21,9 +21,9 @@ const pages: Record<string, LegalCopy> = {
           'Available at no cost for editorial use — articles, blog posts, news features, academic work. Attribution is required: "Photo via Kontaner / <Author>".',
       },
       {
-        title: 'Premium · Commercial',
+        title: 'Commercial',
         body:
-          'Unlocks commercial reuse — advertising, branded social, print campaigns. Includes unlimited project use and signed model releases where applicable.',
+          'Covers commercial reuse — advertising, branded social, print campaigns. Includes unlimited project use and signed model releases where applicable.',
       },
       {
         title: 'Custom · Enterprise',
@@ -33,7 +33,7 @@ const pages: Record<string, LegalCopy> = {
     ],
   },
   privacy: {
-    icon: Lock,
+    icon: 'lock',
     title: 'Privacy',
     intro:
       'A short, plain-English summary of how Kontaner handles your information.',
@@ -56,7 +56,7 @@ const pages: Record<string, LegalCopy> = {
     ],
   },
   support: {
-    icon: LifeBuoy,
+    icon: 'support',
     title: 'Support',
     intro:
       'Need help? Most questions have an answer here. For anything else, reach a human in under 12 hours.',
@@ -83,16 +83,15 @@ const pages: Record<string, LegalCopy> = {
 export function LegalPage() {
   const { slug = 'licensing' } = useParams<{ slug: string }>();
   const data = pages[slug] ?? pages.licensing;
-  const Icon = data.icon;
 
   return (
     <div className="page legal-page">
       <Link to="/" className="legal-back">
-        <ArrowLeft size={16} /> Back to Discover
+        <Icon name="arrow_back" size={16} /> Back to Discover
       </Link>
       <header className="legal-hero">
         <span className="legal-icon">
-          <Icon size={26} />
+          <Icon name={data.icon} size={24} />
         </span>
         <div>
           <h1>{data.title}</h1>

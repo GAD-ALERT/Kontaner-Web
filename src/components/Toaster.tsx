@@ -1,13 +1,13 @@
-import { AlertCircle, CheckCircle2, Info, TriangleAlert, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useToast, type ToastTone } from '../stores/toast';
+import { Icon } from './Icon';
 
-const icons: Record<ToastTone, typeof CheckCircle2> = {
-  info: Info,
-  success: CheckCircle2,
-  warn: TriangleAlert,
-  error: AlertCircle,
+const toneIcons: Record<ToastTone, string> = {
+  info: 'info',
+  success: 'check_circle',
+  warn: 'warning',
+  error: 'error',
 };
 
 export function Toaster() {
@@ -18,7 +18,6 @@ export function Toaster() {
     <div className="toaster" aria-live="polite" aria-atomic="false">
       <AnimatePresence initial={false}>
         {toasts.map((t) => {
-          const Icon = icons[t.tone];
           return (
             <motion.div
               key={t.id}
@@ -31,7 +30,7 @@ export function Toaster() {
               role="status"
             >
               <span className="toast-icon">
-                <Icon size={18} />
+                <Icon name={toneIcons[t.tone]} size={20} filled />
               </span>
               <div className="toast-body">
                 <strong>{t.title}</strong>
@@ -52,7 +51,7 @@ export function Toaster() {
                 aria-label="Dismiss notification"
                 onClick={() => dismiss(t.id)}
               >
-                <X size={15} />
+                <Icon name="close" size={16} />
               </button>
             </motion.div>
           );

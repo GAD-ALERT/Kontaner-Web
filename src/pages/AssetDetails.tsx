@@ -1,15 +1,6 @@
-import {
-  Bookmark,
-  Download,
-  Expand,
-  Link as LinkIcon,
-  PlusSquare,
-  Share2,
-  Sparkles,
-  ZoomIn,
-} from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { Icon } from '../components/Icon';
 import { Lightbox } from '../components/Lightbox';
 import { MiniAsset } from '../components/AssetCard';
 import { AddToCollectionModal } from '../components/AddToCollectionModal';
@@ -41,6 +32,7 @@ export function AssetDetails() {
   const [zoomOpen, setZoomOpen] = useState<boolean>(false);
   const [collectionOpen, setCollectionOpen] = useState<boolean>(false);
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
+  const [copiedHex, setCopiedHex] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -76,12 +68,14 @@ export function AssetDetails() {
     );
   }
 
+  const typeLabel = asset.type === 'PHOTO' ? 'Photo' : 'Illustration';
+
   const details: ReadonlyArray<readonly [string, string]> = [
-    ['Format', `${asset.format} (${asset.type})`],
+    ['Format', `${asset.format} · ${typeLabel}`],
     ['Size', asset.size],
     ['Uploaded', asset.date],
     ['Author', asset.owner],
-    ['License', asset.premium ? 'Premium · Commercial' : 'Free · Editorial'],
+    ['License', 'Free · Editorial'],
   ];
 
   const handleDownload = async (): Promise<void> => {
@@ -177,6 +171,8 @@ export function AssetDetails() {
   const handleSwatchCopy = async (hex: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(hex);
+      setCopiedHex(hex);
+      window.setTimeout(() => setCopiedHex((cur) => (cur === hex ? null : cur)), 1100);
       toast.info(`Copied ${hex}`);
     } catch {
       toast.warn('Could not access clipboard');
@@ -189,7 +185,7 @@ export function AssetDetails() {
         <Link to="/">Discover</Link>
         <span>/</span>
         <Link to={`/search?q=${encodeURIComponent(asset.type.toLowerCase())}`}>
-          {asset.type}
+          {typeLabel}s
         </Link>
         <span>/</span>
         <strong>{asset.displayTitle}</strong>
@@ -224,7 +220,7 @@ export function AssetDetails() {
                   setZoomOpen(true);
                 }}
               >
-                <ZoomIn size={22} />
+                <Icon name="zoom_in" size={24} />
               </button>
               <button
                 className="floating-tool second"
@@ -235,7 +231,7 @@ export function AssetDetails() {
                   if (asset.src) window.open(asset.src, '_blank', 'noopener,noreferrer');
                 }}
               >
-                <Expand size={22} />
+                <Icon name="open_in_new" size={24} />
               </button>
             </div>
           </div>
@@ -262,7 +258,7 @@ export function AssetDetails() {
             onClick={() => void handleDownload()}
             disabled={downloadProgress !== null}
           >
-            <Download size={21} />
+            <Icon name="download" size={20} />
             {downloadProgress === null
               ? hasDownloaded
                 ? `Download again (${asset.size})`
@@ -281,7 +277,7 @@ export function AssetDetails() {
             type="button"
             onClick={handleAddCollection}
           >
-            <PlusSquare size={21} />
+            <Icon name="library_add" size={20} />
             Add to collection
           </button>
 
@@ -291,28 +287,22 @@ export function AssetDetails() {
               onClick={handleFavorite}
               className={isFavorite ? 'is-active' : ''}
             >
-              <Bookmark
-                size={25}
-                fill={isFavorite ? 'currentColor' : 'none'}
-              />
+              <Icon name="bookmark" size={24} filled={isFavorite} />
               {isFavorite ? 'Saved' : 'Favorite'}
             </button>
             <button type="button" onClick={() => void handleShare()}>
-              <Share2 size={25} />
+              <Icon name="share" size={24} />
               Share
             </button>
             <button type="button" onClick={() => void handleCopyLink()}>
-              <LinkIcon size={25} />
+              <Icon name="link" size={24} />
               Copy Link
             </button>
           </div>
 
           <section className="tag-panel">
             <h2>
-              <Sparkles
-                size={18}
-                style={{ marginRight: 8, verticalAlign: 'middle' }}
-              />
+              <Icon name="auto_awesome" size={20} />
               AI-Generated Tags
             </h2>
             <div className="detail-tag-cloud">
@@ -330,10 +320,7 @@ export function AssetDetails() {
 
           <section className="ai-insight">
             <h2>
-              <Sparkles
-                size={18}
-                style={{ marginRight: 8, verticalAlign: 'middle' }}
-              />
+              <Icon name="auto_awesome" size={20} />
               AI Insight
             </h2>
             <p>{insight}</p>
@@ -358,31 +345,42 @@ export function AssetDetails() {
                 <span className="dominant-loading">extracting…</span>
               )}
             </h2>
-            <div className="dominant-row">
+            <div className="palette-row">
               {palette === null
                 ? Array.from({ length: 5 }).map((_, i) => (
-                    <span key={i} className="tone tone-skeleton" />
+                    <div key={i} className="palette-chip">
+                      <span className="palette-block tone-skeleton" />
+                    </div>
                   ))
                 : palette.length === 0
                   ? Array.from({ length: 5 }).map((_, i) => (
-                      <span key={i} className="tone tone-empty" />
+                      <div key={i} className="palette-chip">
+                        <span className="palette-block tone-empty" />
+                      </div>
                     ))
-                  : palette.map((hex) => (
-                      <button
-                        key={hex}
-                        type="button"
-                        className="tone"
-                        style={{ background: hex }}
-                        title={hex.toUpperCase()}
-                        onClick={() => void handleSwatchCopy(hex.toUpperCase())}
-                      >
-                        <span className="tone-label">{hex.toUpperCase()}</span>
-                      </button>
-                    ))}
+                  : palette.map((hex) => {
+                      const code = hex.toUpperCase();
+                      const copied = copiedHex === code;
+                      return (
+                        <button
+                          key={hex}
+                          type="button"
+                          className="palette-chip"
+                          title={`Copy ${code}`}
+                          onClick={() => void handleSwatchCopy(code)}
+                        >
+                          <span className="palette-block" style={{ background: hex }}>
+                            <span className="palette-copy">
+                              <Icon name={copied ? 'check' : 'content_copy'} size={16} />
+                            </span>
+                          </span>
+                          <span className={copied ? 'palette-hex copied' : 'palette-hex'}>
+                            {copied ? 'Copied' : code}
+                          </span>
+                        </button>
+                      );
+                    })}
             </div>
-            {palette && palette.length > 0 && (
-              <p className="dominant-hint">Click a swatch to copy the hex code.</p>
-            )}
           </section>
         </aside>
       </section>

@@ -1,4 +1,4 @@
-import { Archive, CheckCircle2 } from 'lucide-react';
+import { Icon } from '../components/Icon';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../stores/auth';
@@ -43,26 +43,26 @@ export function Signup() {
         <div className="login-overlay">
           <div className="login-brand">
             <span>
-              <Archive size={28} />
+              <Icon name="inventory_2" size={24} />
             </span>
             <strong>Kontaner</strong>
           </div>
           <h1>Build your creative library, one upload at a time.</h1>
           <ul>
             <li>
-              <CheckCircle2 size={14} />
+              <Icon name="check_circle" size={16} filled />
               Free 20 GB to start
             </li>
             <li>
-              <CheckCircle2 size={14} />
+              <Icon name="check_circle" size={16} filled />
               AI tags every upload in seconds
             </li>
             <li>
-              <CheckCircle2 size={14} />
+              <Icon name="check_circle" size={16} filled />
               Built for the Ghanaian creative scene
             </li>
             <li>
-              <CheckCircle2 size={14} />
+              <Icon name="check_circle" size={16} filled />
               No credit card required
             </li>
           </ul>

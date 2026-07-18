@@ -193,7 +193,7 @@
 }
 .upload-insight p {
   margin: 0;
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--ink);
 }
@@ -233,9 +233,9 @@
     rgba(120, 237, 191, 0.09)
   );
   border: 1px solid rgba(0, 105, 76, 0.22);
-  border-radius: 14px;
-  padding: 16px 18px;
-  margin-bottom: 18px;
+  border-radius: var(--r-md);
+  padding: 18px 20px;
+  margin-top: 34px;
 }
 .ai-insight h2 {
   font-size: 13px !important;

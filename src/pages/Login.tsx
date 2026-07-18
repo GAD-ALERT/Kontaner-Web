@@ -1,4 +1,4 @@
-import { Archive, CheckCircle2 } from 'lucide-react';
+import { Icon } from '../components/Icon';
 import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../stores/auth';
@@ -42,22 +42,22 @@ export function Login() {
         <div className="login-overlay">
           <div className="login-brand">
             <span>
-              <Archive size={28} />
+              <Icon name="inventory_2" size={24} />
             </span>
             <strong>Kontaner</strong>
           </div>
           <h1>Your creative library, intelligently organised.</h1>
           <ul>
             <li>
-              <CheckCircle2 size={14} />
+              <Icon name="check_circle" size={16} filled />
               Auto-tagged in seconds
             </li>
             <li>
-              <CheckCircle2 size={14} />
+              <Icon name="check_circle" size={16} filled />
               Search in plain English
             </li>
             <li>
-              <CheckCircle2 size={14} />
+              <Icon name="check_circle" size={16} filled />
               Your library, organised intelligently
             </li>
           </ul>

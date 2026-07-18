@@ -6,8 +6,8 @@ import {
   type DragEvent,
 } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { CheckCircle2, CloudUpload, Sparkles, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Icon } from '../components/Icon';
 import { useDominantColors } from '../hooks/useDominantColors';
 import { modalSpring } from '../lib/motion';
 import { useLibrary } from '../stores/library';
@@ -23,7 +23,6 @@ interface Step {
   title: string;
   body: string;
 }
-
 
 const steps: readonly Step[] = [
   {
@@ -53,6 +52,7 @@ export function Upload() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
   const addUpload = useLibrary((s) => s.addUpload);
+  const removeUpload = useLibrary((s) => s.removeUpload);
   const uploads = useLibrary((s) => s.uploads);
   const pushNotif = useNotifications((s) => s.push);
 
@@ -157,7 +157,7 @@ export function Upload() {
       <div className="upload-v2-header">
         <h1>Upload to your library</h1>
         <p className="upload-v2-subtitle">
-          <Sparkles size={16} />
+          <Icon name="auto_awesome" size={16} />
           Our AI tags every upload with Ghanaian-aware vision so your assets
           surface in the right searches.
         </p>
@@ -178,7 +178,7 @@ export function Upload() {
                 transition={{ duration: 0.25 }}
               >
                 <div className="upload-v2-icon-ring">
-                  <CloudUpload size={36} />
+                  <Icon name="cloud_upload" size={40} />
                 </div>
                 <div className="upload-v2-drop-copy">
                   <h2>Drag and drop your image here</h2>
@@ -187,7 +187,7 @@ export function Upload() {
                 <input
                   ref={inputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,image/tiff,image/heic,image/heif"
+                  accept="image/jpeg,image/png,image/webp,image/tiff,image/svg+xml,image/heic,image/heif"
                   hidden
                   onChange={handleInputChange}
                 />
@@ -213,7 +213,7 @@ export function Upload() {
                   onClick={reset}
                   aria-label="Cancel and start over"
                 >
-                  <X size={18} />
+                  <Icon name="close" size={20} />
                 </button>
 
                 <div className="upload-process-preview">
@@ -252,7 +252,7 @@ export function Upload() {
                     {stage === 'done' && (
                       <>
                         {' · '}
-                        <CheckCircle2 size={13} /> Tagged
+                        <Icon name="check_circle" size={16} filled /> Tagged
                       </>
                     )}
                   </span>
@@ -260,7 +260,7 @@ export function Upload() {
 
                 <div className="upload-tag-stream">
                   <h3>
-                    <Sparkles size={15} />
+                    <Icon name="auto_awesome" size={16} />
                     {stage === 'done' ? 'AI-generated tags' : 'Detecting…'}
                   </h3>
                   <div className="upload-tag-cloud">
@@ -292,7 +292,7 @@ export function Upload() {
                     transition={{ delay: 0.15, duration: 0.4 }}
                   >
                     <h3>
-                      <Sparkles size={15} />
+                      <Icon name="auto_awesome" size={16} />
                       Editorial insight
                     </h3>
                     <p>{insight}</p>
@@ -408,7 +408,17 @@ export function Upload() {
                         </Link>
                         <span>{a.size} · {a.date}</span>
                       </div>
-                      <CheckCircle2 size={17} className="upload-v2-check" />
+                      <button
+                        type="button"
+                        className="upload-v2-check"
+                        aria-label="Remove from recent uploads"
+                        onClick={() => {
+                          removeUpload(a.id);
+                          toast.info('Removed from library');
+                        }}
+                      >
+                        <Icon name="close" size={16} />
+                      </button>
                     </li>
                   ))
                 : recentUploads.map((u) => (
@@ -418,7 +428,12 @@ export function Upload() {
                         <strong>{u.name}</strong>
                         <span>{u.size} · {u.time}</span>
                       </div>
-                      <CheckCircle2 size={17} className="upload-v2-check" />
+                      <Icon
+                        name="check_circle"
+                        size={20}
+                        filled
+                        className="upload-v2-check"
+                      />
                     </li>
                   ))}
             </ul>

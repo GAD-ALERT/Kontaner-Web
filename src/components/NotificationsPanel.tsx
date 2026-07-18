@@ -1,5 +1,4 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { Bell, BellOff, CheckCheck, FolderHeart, ShieldCheck, UserPlus } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -7,12 +6,13 @@ import {
   useNotifications,
   type NotificationTone,
 } from '../stores/notifications';
+import { Icon } from './Icon';
 
-const icons: Record<NotificationTone, typeof Bell> = {
-  system: Bell,
-  collection: FolderHeart,
-  social: UserPlus,
-  security: ShieldCheck,
+const toneIcons: Record<NotificationTone, string> = {
+  system: 'notifications',
+  collection: 'folder_special',
+  social: 'person_add',
+  security: 'verified_user',
 };
 
 interface Props {
@@ -58,7 +58,7 @@ export function NotificationsPanel({ open, onClose }: Props) {
             <h3>Notifications</h3>
             {items.some((n) => !n.read) && (
               <button type="button" className="text-button" onClick={markAllRead}>
-                <CheckCheck size={14} />
+                <Icon name="done_all" size={16} />
                 Mark all read
               </button>
             )}
@@ -66,13 +66,12 @@ export function NotificationsPanel({ open, onClose }: Props) {
 
           {items.length === 0 ? (
             <div className="notif-empty">
-              <BellOff size={28} />
+              <Icon name="notifications_off" size={32} />
               <p>You're all caught up.</p>
             </div>
           ) : (
             <ul className="notif-list">
               {items.map((n) => {
-                const Icon = icons[n.tone];
                 const Wrapper: React.ElementType = n.href ? Link : 'div';
                 return (
                   <li key={n.id} className={n.read ? 'read' : 'unread'}>
@@ -85,7 +84,7 @@ export function NotificationsPanel({ open, onClose }: Props) {
                       }}
                     >
                       <span className={`notif-icon tone-${n.tone}`}>
-                        <Icon size={15} />
+                        <Icon name={toneIcons[n.tone]} size={16} />
                       </span>
                       <div className="notif-body">
                         <strong>{n.title}</strong>
