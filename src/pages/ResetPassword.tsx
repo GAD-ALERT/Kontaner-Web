@@ -1,6 +1,6 @@
-import { Archive, CheckCircle2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Icon } from '../components/Icon';
 import { apiRequest } from '../lib/api';
 
 export function ResetPassword() {
@@ -29,12 +29,12 @@ export function ResetPassword() {
   return (
     <main className="login-page">
       <section className="login-visual"><div className="login-overlay">
-        <div className="login-brand"><span><Archive size={28} /></span><strong>Kontaner</strong></div>
+        <div className="login-brand"><span><Icon name="inventory_2" size={24} /></span><strong>Kontaner</strong></div>
         <h1>Choose a secure new password.</h1>
       </div></section>
       <section className="login-panel">
         {complete ? <div className="forgot-sent">
-          <div className="forgot-check"><CheckCircle2 size={48} /></div>
+          <div className="forgot-check"><Icon name="check_circle" size={40} /></div>
           <h2>Password updated</h2><p>You can now sign in with your new password.</p>
           <Link className="primary-button login-submit" to="/login">Sign in</Link>
         </div> : <form className="login-form" onSubmit={(event) => void submit(event)}>

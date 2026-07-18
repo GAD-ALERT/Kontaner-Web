@@ -1,7 +1,7 @@
-import { MapPin, UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AssetCard } from '../components/AssetCard';
+import { Icon } from '../components/Icon';
 import { apiRequest } from '../lib/api';
 import type { CreatorDetailResponse } from '../types';
 
@@ -26,7 +26,7 @@ export function CreatorProfile() {
     <section className="library-hero">
       <div className="creator-card">
         <span className="creator-avatar green">{creator.avatarUrl ? <img src={creator.avatarUrl} alt="" /> : creator.avatarInitials}</span>
-        <div><h1>{creator.name}</h1><p><UserRound size={16} /> {creator.role}</p>{creator.location && <p><MapPin size={16} /> {creator.location}</p>}</div>
+        <div><h1>{creator.name}</h1><p><Icon name="person" size={16} /> {creator.role}</p>{creator.location && <p><Icon name="location_on" size={16} /> {creator.location}</p>}</div>
       </div>
       <div className="stat-card"><span>Published assets</span><strong>{creator.assetCount}</strong></div>
     </section>
