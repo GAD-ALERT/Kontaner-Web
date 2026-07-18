@@ -14,6 +14,7 @@
   "dependencies": {
     "@types/colorthief": "^2.6.1",
     "colorthief": "^3.3.1",
+    "lucide-react": "^1.25.0",
     "material-symbols": "^0.45.6",
     "motion": "^12.42.0",
     "react": "^19.2.6",
