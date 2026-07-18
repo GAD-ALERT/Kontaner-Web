@@ -7,6 +7,7 @@ export type {
   Asset,
   AssetType,
   AssetFormat,
+  LicenseTier,
   VisualClass,
   CollectionVisualClass,
   Collection,

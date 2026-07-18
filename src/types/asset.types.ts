@@ -2,9 +2,21 @@
  * Core domain types for Kontaner assets and collections.
  */
 
-export type AssetType = 'PHOTO' | 'ILLUSTRATION';
+export type AssetType = 'PHOTO' | 'VIDEO' | 'GRAPHIC' | '3D';
 
-export type AssetFormat = 'JPG' | 'PNG' | 'RAW' | 'SVG' | 'TIFF' | 'WEBP';
+/** License tier used by /api/assets filters and the Discover tab strip. */
+export type LicenseTier = 'all' | 'free' | 'premium';
+
+export type AssetFormat =
+  | 'JPG'
+  | 'PNG'
+  | 'RAW'
+  | 'SVG'
+  | 'TIFF'
+  | 'WEBP'
+  | 'MP4'
+  | 'AI'
+  | 'OBJ';
 
 /**
  * CSS visual class returned by the asset service.
