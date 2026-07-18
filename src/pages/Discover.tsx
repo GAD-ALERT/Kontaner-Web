@@ -20,7 +20,7 @@ import { Icon } from '../components/Icon';
 import { SkeletonAssetGrid } from '../components/Skeleton';
 import { gridContainer, gridItem, heroItem } from '../lib/motion';
 import { apiRequest } from '../lib/api';
-import type { Asset, AssetListResponse, AssetType, Creator, CreatorListResponse, PublicCollection } from '../types';
+import type { Asset, AssetListResponse, AssetType, Creator, CreatorListResponse, LicenseTier, PublicCollection } from '../types';
 
 interface CategoryCard {
   label: string;
