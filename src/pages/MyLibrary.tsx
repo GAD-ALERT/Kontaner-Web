@@ -23,7 +23,7 @@ const filters: readonly LibraryFilter[] = [
 
 const filterToType: Partial<Record<LibraryFilter, AssetType>> = {
   Photos: 'PHOTO',
-  Illustrations: 'ILLUSTRATION',
+  Illustrations: 'GRAPHIC',
 };
 
 const sortLabels: Record<SortKey, string> = {

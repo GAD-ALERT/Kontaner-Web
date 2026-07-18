@@ -93,10 +93,10 @@ const TYPE_KEYWORDS: Record<string, AssetType> = {
   photograph: 'PHOTO',
   picture: 'PHOTO',
   image: 'PHOTO',
-  illustration: 'ILLUSTRATION',
-  graphic: 'ILLUSTRATION',
-  vector: 'ILLUSTRATION',
-  drawing: 'ILLUSTRATION',
+  illustration: 'GRAPHIC',
+  graphic: 'GRAPHIC',
+  vector: 'GRAPHIC',
+  drawing: 'GRAPHIC',
 };
 
 function tokenise(query: string): string[] {
