@@ -1,14 +1,24 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
+import { apiRequest } from '../lib/api';
 
 export function Forgot() {
   const [email, setEmail] = useState<string>('');
   const [sent, setSent] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-    setSent(true);
+    setSubmitting(true);
+    setError('');
+    try {
+      await apiRequest('/auth/forgot-password', { method: 'POST', body: { email } });
+      setSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Password recovery is unavailable.');
+    } finally { setSubmitting(false); }
   };
 
   return (
@@ -43,7 +53,7 @@ export function Forgot() {
             </Link>
           </div>
         ) : (
-          <form className="login-form" onSubmit={handleSubmit}>
+          <form className="login-form" onSubmit={(event) => void handleSubmit(event)}>
             <p className="eyebrow">No worries</p>
             <h2>Reset your password</h2>
             <label>
@@ -56,8 +66,9 @@ export function Forgot() {
                 placeholder="name@creativehub.com"
               />
             </label>
-            <button className="primary-button login-submit" type="submit">
-              Send reset link
+            {error && <p className="form-error" role="alert">{error}</p>}
+            <button className="primary-button login-submit" type="submit" disabled={submitting}>
+              {submitting ? 'Sending…' : 'Send reset link'}
             </button>
             <p className="signup-copy">
               Remembered it? <Link to="/login">Sign in</Link>

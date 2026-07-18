@@ -7,6 +7,8 @@ import { useFavorites } from '../stores/favorites';
 import { useCollections } from '../stores/collections';
 import { useNotifications } from '../stores/notifications';
 import { toast } from '../stores/toast';
+import { apiRequest } from '../lib/api';
+import type { NotificationPreferences, StorageUsage } from '../types';
 
 type SettingsTab = 'profile' | 'account' | 'notifications' | 'storage' | 'billing';
 
@@ -27,62 +29,68 @@ const items: readonly SettingsItem[] = [
 export function AccountSettings() {
   const user = useAuth((s) => s.user);
   const updateProfile = useAuth((s) => s.updateProfile);
+  const uploadAvatar = useAuth((s) => s.uploadAvatar);
   const logout = useAuth((s) => s.logout);
   const uploads = useLibrary((s) => s.uploads);
   const downloads = useLibrary((s) => s.downloads);
   const favorites = useFavorites((s) => s.ids);
   const collections = useCollections((s) => s.collections);
-  const notifSettings = {
-    digest: true,
-    activity: true,
-    promotions: false,
-    security: true,
+  const notifSettings = user?.notificationPreferences ?? {
+    digest: true, activity: true, promotions: false, security: true,
   };
 
   const [tab, setTab] = useState<SettingsTab>('profile');
-  const [name, setName] = useState<string>(user?.name ?? 'Ama Serwaa');
+  const [name, setName] = useState<string>(user?.name ?? '');
   const [role, setRole] = useState<string>(user?.role ?? 'Visual Designer');
-  const [bio, setBio] = useState<string>(
-    user?.bio ??
-      'Multidisciplinary designer based in Accra, specializing in high-resolution digital assets inspired by West African geometry and urban landscapes.',
-  );
-  const [location, setLocation] = useState<string>(user?.location ?? 'Accra, Ghana');
+  const [bio, setBio] = useState<string>(user?.bio ?? '');
+  const [location, setLocation] = useState<string>(user?.location ?? '');
   const [avatarUrl, setAvatarUrl] = useState<string>(user?.avatarUrl ?? '');
-  const [dirty, setDirty] = useState<boolean>(false);
-  const [saving, setSaving] = useState<boolean>(false);
-  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInput = useRef<HTMLInputElement | null>(null);
+  const [storage, setStorage] = useState<StorageUsage | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-    setName(user.name);
-    setRole(user.role);
-    setBio(user.bio ?? bio);
-    setLocation(user.location ?? location);
-    setAvatarUrl(user.avatarUrl ?? '');
-  }, [user]);
+    const controller = new AbortController();
+    void apiRequest<StorageUsage>('/uploads/usage', { auth: true, signal: controller.signal })
+      .then(setStorage)
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+  const [dirty, setDirty] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
 
   const markDirty = <T,>(setter: (v: T) => void) => (v: T) => {
     setter(v);
     setDirty(true);
   };
 
-  const handlePhoto = (e: ChangeEvent<HTMLInputElement>): void => {
-    const file = e.target.files?.[0];
+  const handleAvatar = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = event.target.files?.[0];
     if (!file) return;
-    if (avatarUrl.startsWith('blob:')) URL.revokeObjectURL(avatarUrl);
-    const url = URL.createObjectURL(file);
-    setAvatarUrl(url);
-    setDirty(true);
-    toast.info('Photo updated', 'Hit Save changes to apply.');
+    setAvatarUploading(true);
+    try {
+      const updated = await uploadAvatar(file);
+      setAvatarUrl(updated.avatarUrl);
+      toast.success('Profile photo updated');
+    } catch (err) {
+      toast.error('Photo upload failed', err instanceof Error ? err.message : undefined);
+    } finally {
+      setAvatarUploading(false);
+      event.target.value = '';
+    }
   };
 
   const handleSave = async (): Promise<void> => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 550));
-    updateProfile({ name, role, bio, location, avatarUrl });
-    setSaving(false);
-    setDirty(false);
-    toast.success('Profile saved');
+    try {
+      await updateProfile({ name, role, bio, location, avatarUrl });
+      setDirty(false);
+      toast.success('Profile saved');
+    } catch (err) {
+      toast.error('Profile could not be saved', err instanceof Error ? err.message : undefined);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -104,14 +112,7 @@ export function AccountSettings() {
         </section>
         <section className="hub-card">
           <h3>Ghana Creative Hub</h3>
-          <p>Verified Contributor since 2022. You have {uploads.length} public assets.</p>
-          <button
-            className="text-button"
-            type="button"
-            onClick={() => toast.info('Portfolio preview coming soon')}
-          >
-            View Portfolio
-          </button>
+          <p>Member since {user?.createdAt ? new Date(user.createdAt).getFullYear() : '—'}. You have {uploads.length} uploaded assets.</p>
         </section>
       </aside>
 
@@ -134,19 +135,14 @@ export function AccountSettings() {
                     )}
                   </div>
                   <button
-                    aria-label="Edit profile photo"
                     type="button"
-                    onClick={() => fileRef.current?.click()}
+                    aria-label="Upload profile photo"
+                    disabled={avatarUploading}
+                    onClick={() => avatarInput.current?.click()}
                   >
                     <Icon name="edit" size={20} />
                   </button>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={handlePhoto}
-                  />
+                  <input ref={avatarInput} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void handleAvatar(event)} />
                 </div>
                 <form
                   className="profile-form"
@@ -216,29 +212,22 @@ export function AccountSettings() {
                   </div>
                   <div>
                     <dt>Password</dt>
-                    <dd>•••••••••• <button type="button" className="text-button" onClick={() => toast.info('Password reset email sent')}>Change</button></dd>
+                    <dd><a href="/forgot">Send a password reset email</a></dd>
                   </div>
                   <div>
                     <dt>Two-factor auth</dt>
                     <dd>
                       <span className="status-pill ok">
-                        <Icon name="verified_user" size={16} /> Enabled
+                        <Icon name="verified_user" size={16} /> Not configured
                       </span>
                     </dd>
                   </div>
                   <div>
                     <dt>Member since</dt>
-                    <dd>March 12, 2022</dd>
+                    <dd>{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}</dd>
                   </div>
                 </dl>
                 <div className="settings-actions">
-                  <button
-                    type="button"
-                    className="outline-button compact"
-                    onClick={() => toast.info('Export prepared — check your email shortly')}
-                  >
-                    Export my data
-                  </button>
                   <button
                     type="button"
                     className="text-button danger"
@@ -268,17 +257,10 @@ export function AccountSettings() {
                     <Icon name="cloud" size={24} />
                     Storage Overview
                   </h2>
-                  <button
-                    className="text-button"
-                    type="button"
-                    onClick={() => toast.info('Upgrade flow coming soon')}
-                  >
-                    Upgrade Plan
-                  </button>
                 </div>
                 <div className="storage-layout">
                   <div className="donut">
-                    <strong>34%</strong>
+                    <strong>{storage ? `${Math.round((storage.usedBytes / Math.max(1, storage.quotaBytes)) * 100)}%` : '—'}</strong>
                     <span>Used</span>
                   </div>
                   <div className="storage-details">
@@ -290,18 +272,19 @@ export function AccountSettings() {
                     <div className="legend">
                       <span>
                         <i className="images" />
-                        Photos (2.6GB)
+                        Images ({formatStorage(storage?.breakdown.find((item) => item.type === 'PHOTO')?.bytes ?? 0)})
                       </span>
                       <span>
-                        <i className="illustrations" />
-                        Illustrations (0.5GB)
+                        <i className="videos" />
+                        Videos ({formatStorage(storage?.breakdown.find((item) => item.type === 'VIDEO')?.bytes ?? 0)})
                       </span>
                       <span>
-                        <i className="other" />
-                        Other (0.1GB)
+                        <i className="docs" />
+                        Other ({formatStorage((storage?.breakdown ?? []).filter((item) => !['PHOTO', 'VIDEO'].includes(item.type)).reduce((sum, item) => sum + item.bytes, 0))})
                       </span>
                     </div>
                     <h3>Activity summary</h3>
+                    <p>{storage ? `${formatStorage(storage.usedBytes)} of ${formatStorage(storage.quotaBytes)} used · ${formatStorage(storage.remainingBytes)} remaining` : 'Loading storage usage…'}</p>
                     <article className="file-row">
                       <Icon name="cloud_upload" size={24} />
                       <div>
@@ -330,37 +313,21 @@ export function AccountSettings() {
                 <h2>Billing</h2>
                 <div className="plan-card">
                   <div>
-                    <strong>Studio plan</strong>
-                    <p>20 GB storage · Unlimited downloads · Team seat</p>
+                    <strong>No billing plan</strong>
+                    <p>Billing is not configured for this deployment.</p>
                   </div>
-                  <span className="plan-price">GH₵ 99 / month</span>
+                  <span className="plan-price">—</span>
                 </div>
                 <dl className="settings-dl">
                   <div>
                     <dt>Next renewal</dt>
-                    <dd>July 12, 2026</dd>
+                    <dd>Not scheduled</dd>
                   </div>
                   <div>
                     <dt>Payment method</dt>
-                    <dd>MTN Mobile Money · •••• 4421</dd>
+                    <dd>Not configured</dd>
                   </div>
                 </dl>
-                <div className="settings-actions">
-                  <button
-                    type="button"
-                    className="primary-button compact"
-                    onClick={() => toast.info('Plans coming soon')}
-                  >
-                    Change plan
-                  </button>
-                  <button
-                    type="button"
-                    className="outline-button compact"
-                    onClick={() => toast.info('Invoice downloaded')}
-                  >
-                    Download last invoice
-                  </button>
-                </div>
               </section>
             </>
           )}
@@ -377,13 +344,27 @@ interface NotifPrefs {
   security: boolean;
 }
 
+function formatStorage(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`;
+}
+
 function NotificationsPrefs({ initial }: { initial: NotifPrefs }) {
   const [prefs, setPrefs] = useState<NotifPrefs>(initial);
   const markAllRead = useNotifications((s) => s.markAllRead);
+  const updatePreferences = useAuth((s) => s.updatePreferences);
 
   const set = (key: keyof NotifPrefs) => (v: boolean): void => {
-    setPrefs((p) => ({ ...p, [key]: v }));
-    toast.info(`${key[0].toUpperCase()}${key.slice(1)} ${v ? 'on' : 'off'}`);
+    const next: NotificationPreferences = { ...prefs, [key]: v };
+    setPrefs(next);
+    void updatePreferences(next).then(() => {
+      toast.success('Notification preferences saved');
+    }).catch((err: unknown) => {
+      setPrefs(prefs);
+      toast.error('Preferences could not be saved', err instanceof Error ? err.message : undefined);
+    });
   };
 
   return (

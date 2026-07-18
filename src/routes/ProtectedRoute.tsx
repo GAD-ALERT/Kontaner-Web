@@ -8,7 +8,10 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const user = useAuth((s) => s.user);
+  const status = useAuth((s) => s.status);
   const location = useLocation();
+
+  if (status === 'restoring') return null;
 
   if (user === null) {
     return (

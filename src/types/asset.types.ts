@@ -7,8 +7,7 @@ export type AssetType = 'PHOTO' | 'ILLUSTRATION';
 export type AssetFormat = 'JPG' | 'PNG' | 'RAW' | 'SVG' | 'TIFF' | 'WEBP';
 
 /**
- * CSS visual gradient class identifier used to render mock thumbnails
- * via the `visual-*` rules defined in `styles.css`.
+ * CSS visual class returned by the asset service.
  */
 export type VisualClass =
   | 'visual-kente'
@@ -41,10 +40,12 @@ export interface Asset {
   size: string;
   date: string;
   owner: string;
+  creatorId?: string | null;
   visual: VisualClass;
   tags: string[];
   likes?: number;
   downloads?: number;
+  aiInsight?: string | null;
   aspectRatio?: AspectRatio;
   /** Public-relative path to the bundled image. Populated in Day 3. */
   src?: string;
@@ -63,10 +64,13 @@ export interface Collection {
 export interface Creator {
   id: string;
   name: string;
-  handle: string;
+  role: string;
+  bio: string;
+  location: string;
+  avatarUrl: string;
+  avatarInitials: string;
+  memberSince: string;
   assetCount: number;
-  initials: string;
-  accent: 'green' | 'blue' | 'gold' | 'red';
 }
 
 /** An AI-generated descriptive tag. */

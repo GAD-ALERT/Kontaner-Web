@@ -1,18 +1,11 @@
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { useLoginGate } from '../stores/favorites';
-import { useAuth } from '../stores/auth';
 import { modalSpring } from '../lib/motion';
 import { Icon } from './Icon';
 
 export function LoginGate() {
   const { open, reason, hide } = useLoginGate();
-  const loginAsGuest = useAuth((s) => s.loginAsGuest);
-
-  const handleGuest = (): void => {
-    loginAsGuest();
-    hide();
-  };
 
   return (
     <AnimatePresence>
@@ -60,9 +53,6 @@ export function LoginGate() {
                 Sign in
               </Link>
             </div>
-            <button className="gate-guest" type="button" onClick={handleGuest}>
-              Continue as guest
-            </button>
           </motion.div>
         </motion.div>
       )}

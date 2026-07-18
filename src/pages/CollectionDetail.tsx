@@ -1,11 +1,13 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { AssetCard } from '../components/AssetCard';
 import { Icon } from '../components/Icon';
 import { useCollections } from '../stores/collections';
 import { useLibrary } from '../stores/library';
-import { assets as catalog } from '../data/assets';
+import { useFavorites } from '../stores/favorites';
+import { apiRequest } from '../lib/api';
+import type { Asset } from '../types';
 import { toast } from '../stores/toast';
 import { gridContainer, gridItem } from '../lib/motion';
 
@@ -19,19 +21,24 @@ export function CollectionDetail() {
   const remove = useCollections((s) => s.remove);
   const toggleAsset = useCollections((s) => s.toggleAsset);
   const uploads = useLibrary((s) => s.uploads);
+  const favorites = useFavorites((s) => s.items);
+  const hasHydrated = useCollections((s) => s.hasHydrated);
+  const [items, setItems] = useState<Asset[]>([]);
 
-  const allAssets = useMemo(() => [...uploads, ...catalog], [uploads]);
-  const items = useMemo(
-    () =>
-      collection
-        ? collection.assetIds
-            .map((aid) => allAssets.find((a) => a.id === aid))
-            .filter((a): a is NonNullable<typeof a> => Boolean(a))
-        : [],
-    [collection, allAssets],
-  );
+  const allAssets = useMemo(() => [...uploads, ...favorites]
+    .filter((asset, index, list) => list.findIndex((item) => item.id === asset.id) === index), [favorites, uploads]);
+
+  useEffect(() => {
+    if (!id) return;
+    const controller = new AbortController();
+    void apiRequest<{ items: Asset[] }>(`/collections/${encodeURIComponent(id)}`, { auth: true, signal: controller.signal })
+      .then((result) => setItems(result.items));
+    return () => controller.abort();
+  }, [id]);
 
   const [pickerOpen, setPickerOpen] = useState<boolean>(false);
+
+  if (!collection && !hasHydrated) return null;
 
   if (!collection) {
     return (
@@ -49,7 +56,7 @@ export function CollectionDetail() {
   const handleRename = (): void => {
     const next = window.prompt('Rename collection', collection.name);
     if (next && next.trim() && next.trim() !== collection.name) {
-      rename(collection.id, next.trim());
+      void rename(collection.id, next.trim());
       toast.success('Collection renamed');
     }
   };
@@ -66,13 +73,14 @@ export function CollectionDetail() {
 
   const handleDelete = (): void => {
     if (!window.confirm(`Delete "${collection.name}"? This can't be undone.`)) return;
-    remove(collection.id);
+    void remove(collection.id);
     toast.info(`${collection.name} deleted`);
     navigate('/collections');
   };
 
   const handleRemoveItem = (assetId: string, title: string): void => {
-    toggleAsset(collection.id, assetId);
+    void toggleAsset(collection.id, assetId);
+    setItems((current) => current.filter((item) => item.id !== assetId));
     toast.info(`Removed "${title}"`);
   };
 
@@ -144,14 +152,17 @@ export function CollectionDetail() {
                   type="button"
                   key={a.id}
                   className={`collection-picker-tile ${a.visual} ${inside ? 'inside' : ''}`}
-                  onClick={() => {
-                    const action = toggleAsset(collection.id, a.id);
+                  onClick={() => void (async () => {
+                    const action = await toggleAsset(collection.id, a.id);
+                    setItems((current) => action === 'added'
+                      ? [...current.filter((item) => item.id !== a.id), a]
+                      : current.filter((item) => item.id !== a.id));
                     toast[action === 'added' ? 'success' : 'info'](
                       action === 'added'
                         ? `Added "${a.displayTitle}"`
                         : `Removed "${a.displayTitle}"`,
                     );
-                  }}
+                  })()}
                   aria-pressed={inside}
                 >
                   {a.src && <img src={a.src} alt="" loading="lazy" />}

@@ -22,9 +22,9 @@ export function AddToCollectionModal({ open, assetId, assetTitle, onClose }: Pro
   const [creating, setCreating] = useState<boolean>(false);
   const [newName, setNewName] = useState<string>('');
 
-  const handleToggle = (collectionId: string, collectionName: string): void => {
+  const handleToggle = async (collectionId: string, collectionName: string): Promise<void> => {
     if (!assetId) return;
-    const action = toggleAsset(collectionId, assetId);
+    const action = await toggleAsset(collectionId, assetId);
     if (action === 'added') {
       toast.success(
         `Added to ${collectionName}`,
@@ -41,12 +41,12 @@ export function AddToCollectionModal({ open, assetId, assetTitle, onClose }: Pro
     }
   };
 
-  const handleCreate = (): void => {
+  const handleCreate = async (): Promise<void> => {
     const name = newName.trim();
     if (!name) return;
-    const created = create({ name });
+    const created = await create({ name });
     if (assetId) {
-      toggleAsset(created.id, assetId);
+      await toggleAsset(created.id, assetId);
     }
     toast.success(
       'Collection created',
@@ -101,7 +101,7 @@ export function AddToCollectionModal({ open, assetId, assetTitle, onClose }: Pro
                     <button
                       type="button"
                       className={included ? 'included' : ''}
-                      onClick={() => handleToggle(c.id, c.name)}
+                      onClick={() => void handleToggle(c.id, c.name)}
                     >
                       <span className={`add-collection-thumb ${c.visual}`} />
                       <span className="add-collection-meta">
@@ -130,14 +130,14 @@ export function AddToCollectionModal({ open, assetId, assetTitle, onClose }: Pro
                   placeholder="Collection name"
                   autoFocus
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleCreate();
+                    if (e.key === 'Enter') void handleCreate();
                     if (e.key === 'Escape') setCreating(false);
                   }}
                 />
                 <button
                   type="button"
                   className="primary-button compact"
-                  onClick={handleCreate}
+                  onClick={() => void handleCreate()}
                   disabled={!newName.trim()}
                 >
                   Create

@@ -1,4 +1,12 @@
 import {
+  Box,
+  Camera,
+  Film,
+  Image as ImageIcon,
+  Palette,
+  type LucideIcon,
+} from 'lucide-react';
+import {
   useEffect,
   useMemo,
   useState,
@@ -10,10 +18,23 @@ import { AnimatePresence, motion } from 'motion/react';
 import { AssetCard } from '../components/AssetCard';
 import { Icon } from '../components/Icon';
 import { SkeletonAssetGrid } from '../components/Skeleton';
-import { assets, collections, featuredCreators } from '../data/assets';
-import { useFakeLoad } from '../hooks/useFakeLoad';
 import { gridContainer, gridItem, heroItem } from '../lib/motion';
-import type { AssetType } from '../types';
+import { apiRequest } from '../lib/api';
+import type { Asset, AssetListResponse, AssetType, Creator, CreatorListResponse, PublicCollection } from '../types';
+
+interface CategoryCard {
+  label: string;
+  icon: LucideIcon;
+  filter: AssetType | 'ALL';
+  accent: 'green' | 'blue' | 'gold' | 'red' | 'mint';
+}
+
+const categories: readonly CategoryCard[] = [
+  { label: 'Photos', icon: Camera, filter: 'PHOTO', accent: 'green' },
+  { label: 'Videos', icon: Film, filter: 'VIDEO', accent: 'blue' },
+  { label: 'Illustrations', icon: Palette, filter: 'GRAPHIC', accent: 'gold' },
+  { label: '3D Models', icon: Box, filter: '3D', accent: 'red' },
+] as const;
 
 /* Rotating natural-language examples — each phrase is written so its
    keywords overlap real asset tags, so every example returns results. */
@@ -28,10 +49,18 @@ const examplePrompts: readonly string[] = [
 
 export function Discover() {
   const navigate = useNavigate();
-  const loading = useFakeLoad(550);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [query, setQuery] = useState<string>('');
   const [activeCategory, setActiveCategory] = useState<AssetType | 'ALL'>('ALL');
-  const [visibleCount, setVisibleCount] = useState<number>(12);
+  const [licenseTier, setLicenseTier] = useState<LicenseTier>('all');
+  const [collections, setCollections] = useState<PublicCollection[]>([]);
+  const [featuredCreators, setFeaturedCreators] = useState<Creator[]>([]);
+  const [stats, setStats] = useState<{ total: number; downloads: number; creators: number; byType: Array<{ type: string; count: number }> }>({ total: 0, downloads: 0, creators: 0, byType: [] });
   const [promptIndex, setPromptIndex] = useState<number>(0);
   const [promptPaused, setPromptPaused] = useState<boolean>(false);
 
@@ -53,25 +82,62 @@ export function Discover() {
 
   const trending = useMemo(
     () => [...assets].sort((a, b) => (b.likes ?? 0) - (a.likes ?? 0)).slice(0, 8),
-    [],
+    [assets],
   );
-
-  const filteredAssets = useMemo(() => {
-    return assets.filter(
-      (a) => activeCategory === 'ALL' || a.type === activeCategory,
-    );
-  }, [activeCategory]);
-
-  const browseAssets = useMemo(
-    () => filteredAssets.slice(0, visibleCount),
-    [filteredAssets, visibleCount],
-  );
-
-  const hasMore = browseAssets.length < filteredAssets.length;
 
   useEffect(() => {
-    setVisibleCount(12);
-  }, [activeCategory]);
+    const controller = new AbortController();
+    void Promise.all([
+      apiRequest<{ items: PublicCollection[] }>('/collections/public', { signal: controller.signal }),
+      apiRequest<CreatorListResponse>('/creators', { signal: controller.signal }),
+      apiRequest<typeof stats>('/assets/stats', { signal: controller.signal }),
+    ]).then(([collectionResult, creatorResult, statsResult]) => {
+      setCollections(collectionResult.items);
+      setFeaturedCreators(creatorResult.items);
+      setStats(statsResult);
+    }).catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const load = async (): Promise<void> => {
+      setLoading(true);
+      setError('');
+      const params = new URLSearchParams({
+        page: String(page), pageSize: '12', tier: licenseTier, sort: 'new',
+      });
+      if (activeCategory !== 'ALL') params.set('type', activeCategory);
+      try {
+        const result = await apiRequest<AssetListResponse>(`/assets?${params}`, {
+          signal: controller.signal,
+        });
+        setAssets((current) => page === 1 ? result.items : [...current, ...result.items]);
+        setTotal(result.total);
+        setHasMore(result.hasMore);
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          setError(err instanceof Error ? err.message : 'Unable to load assets.');
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    void load();
+    return () => controller.abort();
+  }, [activeCategory, licenseTier, page]);
+
+  const selectCategory = (filter: AssetType | 'ALL'): void => {
+    setAssets([]);
+    setPage(1);
+    setActiveCategory(filter);
+  };
+
+  const selectTier = (tier: LicenseTier): void => {
+    setAssets([]);
+    setPage(1);
+    setLicenseTier(tier);
+  };
 
   return (
     <div className="discover-v2">
@@ -131,7 +197,41 @@ export function Discover() {
               </motion.button>
             </AnimatePresence>
           </motion.div>
+          <motion.div className="hero-v2-stats" variants={heroItem} custom={4}>
+            <div>
+              <strong>{stats.total.toLocaleString()}</strong>
+              <span>Creative assets</span>
+            </div>
+            <div>
+              <strong>{stats.creators.toLocaleString()}</strong>
+              <span>Ghanaian creators</span>
+            </div>
+            <div>
+              <strong>{stats.downloads.toLocaleString()}</strong>
+              <span>Total downloads</span>
+            </div>
+          </motion.div>
         </motion.div>
+      </section>
+
+      {/* CATEGORY MEGA-STRIP */}
+      <section className="category-mega">
+        {categories.map(({ label, icon: CategoryIcon, filter, accent }) => (
+          <button
+            key={label}
+            type="button"
+            className={`category-mega-card ${accent} ${
+              activeCategory === filter ? 'active' : ''
+            }`}
+            onClick={() => selectCategory(filter)}
+          >
+            <span className="category-mega-icon">
+              <CategoryIcon size={26} />
+            </span>
+            <span className="category-mega-label">{label}</span>
+            <span className="category-mega-count">{(stats.byType.find((item) => item.type === filter)?.count ?? 0).toLocaleString()}</span>
+          </button>
+        ))}
       </section>
 
       {/* TRENDING ROW */}
@@ -181,10 +281,10 @@ export function Discover() {
       <section className="discover-section">
         <div className="discover-section-head">
           <div>
-            <h2>Featured collections</h2>
-            <p>Curated sets to start your project from.</p>
+            <h2>Public collections</h2>
+            <p>Recently updated sets shared by Kontaner creators.</p>
           </div>
-          <Link to="/collections" className="text-button">
+          <Link to="/search" className="text-button">
             All collections
             <Icon name="chevron_right" size={16} />
           </Link>
@@ -193,7 +293,7 @@ export function Discover() {
           {collections.map((c) => (
             <Link
               key={c.id}
-              to={`/search?q=${encodeURIComponent(c.name)}`}
+              to={`/public-collection/${c.id}`}
               className={`collection-strip-card ${c.visual}`}
             >
               <div className="collection-strip-meta">
@@ -211,38 +311,37 @@ export function Discover() {
           <div>
             <h2>Browse the library</h2>
             <p>
-              {browseAssets.length} assets
-              {activeCategory === 'PHOTO' && ' in photos'}
-              {activeCategory === 'ILLUSTRATION' && ' in illustrations'}
+              {total} assets
+              {activeCategory !== 'ALL' && ` in ${activeCategory.toLowerCase()}`}
             </p>
           </div>
           <div className="license-toggle" role="tablist">
             <button
               type="button"
               role="tab"
-              aria-selected={activeCategory === 'ALL'}
-              className={activeCategory === 'ALL' ? 'active' : ''}
-              onClick={() => setActiveCategory('ALL')}
+              aria-selected={licenseTier === 'all'}
+              className={licenseTier === 'all' ? 'active' : ''}
+              onClick={() => selectTier('all')}
             >
               All
             </button>
             <button
               type="button"
               role="tab"
-              aria-selected={activeCategory === 'PHOTO'}
-              className={activeCategory === 'PHOTO' ? 'active' : ''}
-              onClick={() => setActiveCategory('PHOTO')}
+              aria-selected={licenseTier === 'free'}
+              className={licenseTier === 'free' ? 'active' : ''}
+              onClick={() => selectTier('free')}
             >
-              Photos
+              Free
             </button>
             <button
               type="button"
               role="tab"
-              aria-selected={activeCategory === 'ILLUSTRATION'}
-              className={activeCategory === 'ILLUSTRATION' ? 'active' : ''}
-              onClick={() => setActiveCategory('ILLUSTRATION')}
+              aria-selected={licenseTier === 'premium'}
+              className={licenseTier === 'premium' ? 'active' : ''}
+              onClick={() => selectTier('premium')}
             >
-              Illustrations
+              Premium
             </button>
           </div>
         </div>
@@ -253,16 +352,22 @@ export function Discover() {
           animate={loading ? 'hidden' : 'visible'}
           key={activeCategory}
         >
-          {loading ? (
+          {loading && assets.length === 0 ? (
             <SkeletonAssetGrid count={8} />
-          ) : browseAssets.length === 0 ? (
+          ) : error && assets.length === 0 ? (
+            <div className="browse-empty" role="alert">
+              <ImageIcon size={42} />
+              <h3>We couldn't load the library</h3>
+              <p>{error}</p>
+            </div>
+          ) : assets.length === 0 ? (
             <div className="browse-empty">
               <Icon name="image" size={40} />
               <h3>Nothing matches those filters yet</h3>
               <p>Try a different category.</p>
             </div>
           ) : (
-            browseAssets.map((asset) => (
+            assets.map((asset) => (
               <motion.div key={asset.id} variants={gridItem}>
                 <AssetCard asset={asset} />
               </motion.div>
@@ -270,17 +375,18 @@ export function Discover() {
           )}
         </motion.div>
 
-        {!loading && hasMore && (
+        {hasMore && (
           <div className="browse-pagination">
             <button
               type="button"
               className="secondary-button"
-              onClick={() => setVisibleCount((c) => c + 12)}
+              onClick={() => setPage((current) => current + 1)}
+              disabled={loading}
             >
-              Load more assets
+              {loading ? 'Loading…' : 'Load more assets'}
             </button>
             <span className="browse-pagination-count">
-              Showing {browseAssets.length} of {filteredAssets.length}
+              Showing {assets.length} of {total}
             </span>
           </div>
         )}
@@ -294,20 +400,20 @@ export function Discover() {
               <Icon name="group" size={24} />
               Featured creators
             </h2>
-            <p>Hand-picked studios and photographers from across Ghana.</p>
+            <p>Creators currently publishing assets on Kontaner.</p>
           </div>
         </div>
         <div className="creator-strip">
           {featuredCreators.map((c) => (
             <Link
               key={c.id}
-              to={`/search?q=${encodeURIComponent(c.name)}`}
+              to={`/creator/${c.id}`}
               className="creator-card"
             >
-              <span className={`creator-avatar ${c.accent}`}>{c.initials}</span>
+              <span className="creator-avatar green">{c.avatarUrl ? <img src={c.avatarUrl} alt="" /> : c.avatarInitials}</span>
               <div>
                 <strong>{c.name}</strong>
-                <span>{c.handle}</span>
+                <span>{c.role}</span>
                 <p>{c.assetCount} assets</p>
               </div>
             </Link>

@@ -17,12 +17,14 @@ export function useDominantColors(
 
   useEffect(() => {
     if (!src) {
-      setColors([]);
+      queueMicrotask(() => setColors([]));
       return;
     }
 
     let cancelled = false;
-    setColors(null);
+    queueMicrotask(() => {
+      if (!cancelled) setColors(null);
+    });
 
     const run = async (): Promise<void> => {
       try {
