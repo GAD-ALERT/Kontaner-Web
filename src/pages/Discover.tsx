@@ -1,12 +1,4 @@
 import {
-  Box,
-  Camera,
-  Film,
-  Image as ImageIcon,
-  Palette,
-  type LucideIcon,
-} from 'lucide-react';
-import {
   useEffect,
   useMemo,
   useState,
@@ -24,16 +16,16 @@ import type { Asset, AssetListResponse, AssetType, Creator, CreatorListResponse,
 
 interface CategoryCard {
   label: string;
-  icon: LucideIcon;
+  icon: string;
   filter: AssetType | 'ALL';
   accent: 'green' | 'blue' | 'gold' | 'red' | 'mint';
 }
 
 const categories: readonly CategoryCard[] = [
-  { label: 'Photos', icon: Camera, filter: 'PHOTO', accent: 'green' },
-  { label: 'Videos', icon: Film, filter: 'VIDEO', accent: 'blue' },
-  { label: 'Illustrations', icon: Palette, filter: 'GRAPHIC', accent: 'gold' },
-  { label: '3D Models', icon: Box, filter: '3D', accent: 'red' },
+  { label: 'Photos', icon: 'photo_camera', filter: 'PHOTO', accent: 'green' },
+  { label: 'Videos', icon: 'movie', filter: 'VIDEO', accent: 'blue' },
+  { label: 'Illustrations', icon: 'palette', filter: 'GRAPHIC', accent: 'gold' },
+  { label: '3D Models', icon: 'view_in_ar', filter: '3D', accent: 'red' },
 ] as const;
 
 /* Rotating natural-language examples — each phrase is written so its
@@ -216,7 +208,7 @@ export function Discover() {
 
       {/* CATEGORY MEGA-STRIP */}
       <section className="category-mega">
-        {categories.map(({ label, icon: CategoryIcon, filter, accent }) => (
+        {categories.map(({ label, icon, filter, accent }) => (
           <button
             key={label}
             type="button"
@@ -226,7 +218,7 @@ export function Discover() {
             onClick={() => selectCategory(filter)}
           >
             <span className="category-mega-icon">
-              <CategoryIcon size={26} />
+              <Icon name={icon} size={24} />
             </span>
             <span className="category-mega-label">{label}</span>
             <span className="category-mega-count">{(stats.byType.find((item) => item.type === filter)?.count ?? 0).toLocaleString()}</span>
@@ -356,7 +348,7 @@ export function Discover() {
             <SkeletonAssetGrid count={8} />
           ) : error && assets.length === 0 ? (
             <div className="browse-empty" role="alert">
-              <ImageIcon size={42} />
+              <Icon name="broken_image" size={40} />
               <h3>We couldn't load the library</h3>
               <p>{error}</p>
             </div>
