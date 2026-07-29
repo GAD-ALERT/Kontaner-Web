@@ -12,21 +12,7 @@ import { Icon } from '../components/Icon';
 import { SkeletonAssetGrid } from '../components/Skeleton';
 import { gridContainer, gridItem, heroItem } from '../lib/motion';
 import { apiRequest } from '../lib/api';
-import type { Asset, AssetListResponse, AssetType, Creator, CreatorListResponse, LicenseTier, PublicCollection } from '../types';
-
-interface CategoryCard {
-  label: string;
-  icon: string;
-  filter: AssetType | 'ALL';
-  accent: 'green' | 'blue' | 'gold' | 'red' | 'mint';
-}
-
-const categories: readonly CategoryCard[] = [
-  { label: 'Photos', icon: 'photo_camera', filter: 'PHOTO', accent: 'green' },
-  { label: 'Videos', icon: 'movie', filter: 'VIDEO', accent: 'blue' },
-  { label: 'Illustrations', icon: 'palette', filter: 'GRAPHIC', accent: 'gold' },
-  { label: '3D Models', icon: 'view_in_ar', filter: '3D', accent: 'red' },
-] as const;
+import type { Asset, AssetListResponse, Creator, CreatorListResponse, LicenseTier, PublicCollection } from '../types';
 
 /* Rotating natural-language examples — each phrase is written so its
    keywords overlap real asset tags, so every example returns results. */
@@ -48,7 +34,6 @@ export function Discover() {
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [query, setQuery] = useState<string>('');
-  const [activeCategory, setActiveCategory] = useState<AssetType | 'ALL'>('ALL');
   const [licenseTier, setLicenseTier] = useState<LicenseTier>('all');
   const [collections, setCollections] = useState<PublicCollection[]>([]);
   const [featuredCreators, setFeaturedCreators] = useState<Creator[]>([]);
@@ -99,7 +84,6 @@ export function Discover() {
       const params = new URLSearchParams({
         page: String(page), pageSize: '12', tier: licenseTier, sort: 'new',
       });
-      if (activeCategory !== 'ALL') params.set('type', activeCategory);
       try {
         const result = await apiRequest<AssetListResponse>(`/assets?${params}`, {
           signal: controller.signal,
@@ -117,13 +101,7 @@ export function Discover() {
     };
     void load();
     return () => controller.abort();
-  }, [activeCategory, licenseTier, page]);
-
-  const selectCategory = (filter: AssetType | 'ALL'): void => {
-    setAssets([]);
-    setPage(1);
-    setActiveCategory(filter);
-  };
+  }, [licenseTier, page]);
 
   const selectTier = (tier: LicenseTier): void => {
     setAssets([]);
@@ -206,26 +184,6 @@ export function Discover() {
         </motion.div>
       </section>
 
-      {/* CATEGORY MEGA-STRIP */}
-      <section className="category-mega">
-        {categories.map(({ label, icon, filter, accent }) => (
-          <button
-            key={label}
-            type="button"
-            className={`category-mega-card ${accent} ${
-              activeCategory === filter ? 'active' : ''
-            }`}
-            onClick={() => selectCategory(filter)}
-          >
-            <span className="category-mega-icon">
-              <Icon name={icon} size={24} />
-            </span>
-            <span className="category-mega-label">{label}</span>
-            <span className="category-mega-count">{(stats.byType.find((item) => item.type === filter)?.count ?? 0).toLocaleString()}</span>
-          </button>
-        ))}
-      </section>
-
       {/* TRENDING ROW */}
       <section className="discover-section">
         <div className="discover-section-head">
@@ -302,10 +260,7 @@ export function Discover() {
         <div className="discover-section-head">
           <div>
             <h2>Browse the library</h2>
-            <p>
-              {total} assets
-              {activeCategory !== 'ALL' && ` in ${activeCategory.toLowerCase()}`}
-            </p>
+            <p>{total} assets</p>
           </div>
           <div className="license-toggle" role="tablist">
             <button
@@ -342,7 +297,7 @@ export function Discover() {
           variants={gridContainer}
           initial="hidden"
           animate={loading ? 'hidden' : 'visible'}
-          key={activeCategory}
+          key={licenseTier}
         >
           {loading && assets.length === 0 ? (
             <SkeletonAssetGrid count={8} />
@@ -355,8 +310,8 @@ export function Discover() {
           ) : assets.length === 0 ? (
             <div className="browse-empty">
               <Icon name="image" size={40} />
-              <h3>Nothing matches those filters yet</h3>
-              <p>Try a different category.</p>
+              <h3>No assets to show yet</h3>
+              <p>Check back soon as creators add more to the library.</p>
             </div>
           ) : (
             assets.map((asset) => (

@@ -278,9 +278,6 @@
   .masonry-results {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
   }
-  .category-mega {
-    grid-template-columns: repeat(3, 1fr) !important;
-  }
   .upload-v2-body {
     grid-template-columns: 1fr 320px !important;
   }
@@ -357,21 +354,6 @@
   }
   .hero-v2-stats strong {
     font-size: 24px !important;
-  }
-
-  /* Category mega-strip — horizontal scroll */
-  .category-mega {
-    grid-template-columns: none !important;
-    display: flex !important;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    gap: 12px !important;
-    padding-bottom: 6px;
-    -webkit-overflow-scrolling: touch;
-  }
-  .category-mega-card {
-    min-width: 150px;
-    scroll-snap-align: start;
   }
 
   /* Grids → 1 column on phones */

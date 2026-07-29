@@ -69,19 +69,6 @@
   box-shadow: 0 20px 44px rgba(20, 40, 30, 0.22);
 }
 
-/* Category mega cards — soft press */
-.category-mega-card {
-  transition: transform 0.18s ease, border-color 0.18s ease,
-    box-shadow 0.18s ease;
-}
-.category-mega-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 26px rgba(20, 40, 30, 0.14);
-}
-.category-mega-card:active {
-  transform: translateY(-1px);
-}
-
 /* Result card lift */
 .result-card {
   transition: transform 0.22s ease, box-shadow 0.22s ease;
@@ -135,7 +122,6 @@
   .hero-v2-bg,
   .asset-card,
   .trending-card,
-  .category-mega-card,
   .result-card,
   .collection-strip-card,
   .bookmark-button {
