@@ -12,6 +12,11 @@ import { toast } from '../stores/toast';
 import { apiRequest } from '../lib/api';
 import type { Asset, AssetResponse } from '../types';
 
+// Mirror the backend's PATCH /uploads/:id limits (updateUploadSchema)
+// so edits never round-trip into a 400.
+const MAX_TAGS = 40;
+const MAX_TAG_LEN = 80;
+
 export function AssetDetails() {
   const { id } = useParams<{ id: string }>();
   const isAuthed = useAuth((s) => s.user !== null);
@@ -19,6 +24,8 @@ export function AssetDetails() {
   const toggle = useFavorites((s) => s.toggle);
   const showGate = useLoginGate((s) => s.show);
   const recordDownload = useLibrary((s) => s.recordDownload);
+  const uploads = useLibrary((s) => s.uploads);
+  const updateUpload = useLibrary((s) => s.updateUpload);
   const hasDownloaded = useLibrary((s) =>
     id ? s.downloads.some((d) => d.assetId === id) : false,
   );
@@ -33,6 +40,10 @@ export function AssetDetails() {
   const [collectionOpen, setCollectionOpen] = useState<boolean>(false);
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const [copiedHex, setCopiedHex] = useState<string | null>(null);
+  const [editingTags, setEditingTags] = useState<boolean>(false);
+  const [draftTags, setDraftTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState<string>('');
+  const [savingTags, setSavingTags] = useState<boolean>(false);
 
   useEffect(() => {
     if (!id) return;
@@ -179,6 +190,61 @@ export function AssetDetails() {
     }
   };
 
+  // Tag edits persist through /uploads/:id, so only the asset's own
+  // uploader can refine its AI-generated tags.
+  const canEditTags = isAuthed && uploads.some((u) => u.id === asset.id);
+
+  const startEditTags = (): void => {
+    setDraftTags(asset.tags);
+    setNewTag('');
+    setEditingTags(true);
+  };
+
+  const cancelEditTags = (): void => {
+    setEditingTags(false);
+    setNewTag('');
+  };
+
+  const removeDraftTag = (index: number): void => {
+    setDraftTags((tags) => tags.filter((_, i) => i !== index));
+  };
+
+  const commitNewTag = (): void => {
+    const value = newTag.trim().slice(0, MAX_TAG_LEN);
+    if (!value) return;
+    if (draftTags.length >= MAX_TAGS) {
+      toast.warn(`You can add up to ${MAX_TAGS} tags`);
+      return;
+    }
+    setDraftTags((tags) =>
+      tags.some((t) => t.toLowerCase() === value.toLowerCase()) ? tags : [...tags, value],
+    );
+    setNewTag('');
+  };
+
+  const saveTags = async (): Promise<void> => {
+    // Fold in any tag typed but not yet committed with Enter.
+    const pending = newTag.trim().slice(0, MAX_TAG_LEN);
+    const finalTags =
+      pending &&
+      draftTags.length < MAX_TAGS &&
+      !draftTags.some((t) => t.toLowerCase() === pending.toLowerCase())
+        ? [...draftTags, pending]
+        : draftTags;
+    setSavingTags(true);
+    try {
+      const updated = await updateUpload(asset.id, { tags: finalTags });
+      setAsset(updated);
+      setEditingTags(false);
+      setNewTag('');
+      toast.success('Tags updated');
+    } catch (err) {
+      toast.error('Could not save tags', err instanceof Error ? err.message : undefined);
+    } finally {
+      setSavingTags(false);
+    }
+  };
+
   return (
     <div className="page detail-page">
       <div className="breadcrumb">
@@ -301,21 +367,101 @@ export function AssetDetails() {
           </div>
 
           <section className="tag-panel">
-            <h2>
-              <Icon name="auto_awesome" size={20} />
-              AI-Generated Tags
-            </h2>
-            <div className="detail-tag-cloud">
-              {asset.tags.map((tag, index) => (
-                <Link
-                  key={`${tag}-${index}`}
-                  to={`/search?q=${encodeURIComponent(tag)}`}
-                  className={index < asset.tags.length ? 'tag primary' : 'tag soft'}
+            <div className="tag-panel-head">
+              <h2>
+                <Icon name="auto_awesome" size={20} />
+                AI-Generated Tags
+              </h2>
+              {canEditTags && !editingTags && (
+                <button
+                  type="button"
+                  className="tag-edit-btn"
+                  onClick={startEditTags}
                 >
-                  {tag}
-                </Link>
-              ))}
+                  <Icon name="edit" size={16} />
+                  Edit
+                </button>
+              )}
+              {editingTags && (
+                <div className="tag-edit-actions">
+                  <button
+                    type="button"
+                    className="tag-cancel-btn"
+                    onClick={cancelEditTags}
+                    disabled={savingTags}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="tag-save-btn"
+                    onClick={() => void saveTags()}
+                    disabled={savingTags}
+                  >
+                    {savingTags ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
+              )}
             </div>
+
+            {editingTags ? (
+              <div className="detail-tag-cloud editing">
+                {draftTags.map((tag, index) => (
+                  <span key={`${tag}-${index}`} className="tag primary editable">
+                    {tag}
+                    <button
+                      type="button"
+                      className="tag-remove"
+                      aria-label={`Remove ${tag}`}
+                      onClick={() => removeDraftTag(index)}
+                    >
+                      <Icon name="close" size={16} />
+                    </button>
+                  </span>
+                ))}
+                <input
+                  className="tag-add-input"
+                  value={newTag}
+                  maxLength={MAX_TAG_LEN}
+                  disabled={draftTags.length >= MAX_TAGS}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ',') {
+                      e.preventDefault();
+                      commitNewTag();
+                    } else if (
+                      e.key === 'Backspace' &&
+                      newTag === '' &&
+                      draftTags.length > 0
+                    ) {
+                      removeDraftTag(draftTags.length - 1);
+                    }
+                  }}
+                  placeholder={
+                    draftTags.length >= MAX_TAGS
+                      ? `Max ${MAX_TAGS} tags`
+                      : 'Add a tag'
+                  }
+                  aria-label="Add a tag"
+                />
+              </div>
+            ) : (
+              <div className="detail-tag-cloud">
+                {asset.tags.length === 0 ? (
+                  <span className="tag soft">No tags yet</span>
+                ) : (
+                  asset.tags.map((tag, index) => (
+                    <Link
+                      key={`${tag}-${index}`}
+                      to={`/search?q=${encodeURIComponent(tag)}`}
+                      className="tag primary"
+                    >
+                      {tag}
+                    </Link>
+                  ))
+                )}
+              </div>
+            )}
           </section>
 
           <section className="ai-insight">
