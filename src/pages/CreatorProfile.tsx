@@ -165,7 +165,7 @@ export function CreatorProfile() {
             className="secondary-button creator-share"
             onClick={copyLink}
           >
-            <Icon name={copied ? 'check' : 'link'} size={18} />
+            <Icon name={copied ? 'check' : 'link'} size={20} />
             {copied ? 'Link copied' : 'Share profile'}
           </button>
         </div>
@@ -206,7 +206,7 @@ export function CreatorProfile() {
         {items.length > 0 && (
           <div className="creator-toolbar">
             <div className="creator-search">
-              <Icon name="search" size={18} />
+              <Icon name="search" size={20} />
               <input
                 aria-label="Search this creator's assets"
                 placeholder="Filter assets by title or tag…"
