@@ -18,6 +18,11 @@ import type { UploadResponse } from '../types';
 
 type UploadStage = 'idle' | 'uploading' | 'processing' | 'tagging' | 'done';
 
+// Mirror the backend's PATCH /uploads/:id limits (updateUploadSchema)
+// so tag edits never round-trip into a 400.
+const MAX_TAGS = 40;
+const MAX_TAG_LEN = 80;
+
 interface Step {
   n: number;
   title: string;
@@ -53,6 +58,7 @@ export function Upload() {
   const navigate = useNavigate();
   const addUpload = useLibrary((s) => s.addUpload);
   const removeUpload = useLibrary((s) => s.removeUpload);
+  const updateUpload = useLibrary((s) => s.updateUpload);
   const uploads = useLibrary((s) => s.uploads);
   const pushNotif = useNotifications((s) => s.push);
 
@@ -63,6 +69,10 @@ export function Upload() {
   const [tags, setTags] = useState<string[]>([]);
   const [insight, setInsight] = useState<string>('');
   const [savedAssetId, setSavedAssetId] = useState<string | null>(null);
+  const [editingTags, setEditingTags] = useState<boolean>(false);
+  const [draftTags, setDraftTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState<string>('');
+  const [savingTags, setSavingTags] = useState<boolean>(false);
   const palette = useDominantColors(stage === 'done' ? previewUrl : undefined, 5);
 
   const recentUploads = uploads.length > 0
@@ -86,6 +96,9 @@ export function Upload() {
     setTags([]);
     setInsight('');
     setSavedAssetId(null);
+    setEditingTags(false);
+    setDraftTags([]);
+    setNewTag('');
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl('');
     setFile(null);
@@ -93,6 +106,60 @@ export function Upload() {
 
   const handleSaveToLibrary = (): void => {
     if (savedAssetId) navigate(`/asset/${savedAssetId}`);
+  };
+
+  const startEditTags = (): void => {
+    setDraftTags(tags);
+    setNewTag('');
+    setEditingTags(true);
+  };
+
+  const cancelEditTags = (): void => {
+    setEditingTags(false);
+    setNewTag('');
+  };
+
+  const removeDraftTag = (index: number): void => {
+    setDraftTags((current) => current.filter((_, i) => i !== index));
+  };
+
+  const commitNewTag = (): void => {
+    const value = newTag.trim().slice(0, MAX_TAG_LEN);
+    if (!value) return;
+    if (draftTags.length >= MAX_TAGS) {
+      toast.warn(`You can add up to ${MAX_TAGS} tags`);
+      return;
+    }
+    setDraftTags((current) =>
+      current.some((t) => t.toLowerCase() === value.toLowerCase())
+        ? current
+        : [...current, value],
+    );
+    setNewTag('');
+  };
+
+  const saveTags = async (): Promise<void> => {
+    if (!savedAssetId) return;
+    // Fold in any tag typed but not yet committed with Enter.
+    const pending = newTag.trim().slice(0, MAX_TAG_LEN);
+    const finalTags =
+      pending &&
+      draftTags.length < MAX_TAGS &&
+      !draftTags.some((t) => t.toLowerCase() === pending.toLowerCase())
+        ? [...draftTags, pending]
+        : draftTags;
+    setSavingTags(true);
+    try {
+      const updated = await updateUpload(savedAssetId, { tags: finalTags });
+      setTags(updated.tags);
+      setEditingTags(false);
+      setNewTag('');
+      toast.success('Tags updated');
+    } catch (err) {
+      toast.error('Could not save tags', err instanceof Error ? err.message : undefined);
+    } finally {
+      setSavingTags(false);
+    }
   };
 
   const handleFile = async (next: File | undefined): Promise<void> => {
@@ -259,29 +326,105 @@ export function Upload() {
                 </div>
 
                 <div className="upload-tag-stream">
-                  <h3>
-                    <Icon name="auto_awesome" size={16} />
-                    {stage === 'done' ? 'AI-generated tags' : 'Detecting…'}
-                  </h3>
-                  <div className="upload-tag-cloud">
-                    <AnimatePresence>
-                      {tags.map((tag) => (
-                        <motion.span
-                          key={tag}
-                          className="tag primary"
-                          initial={{ opacity: 0, y: 6, scale: 0.92 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.28 }}
+                  <div className="upload-tag-head">
+                    <h3>
+                      <Icon name="auto_awesome" size={16} />
+                      {stage === 'done' ? 'AI-generated tags' : 'Detecting…'}
+                    </h3>
+                    {stage === 'done' && savedAssetId && !editingTags && (
+                      <button
+                        type="button"
+                        className="tag-edit-btn small"
+                        onClick={startEditTags}
+                      >
+                        <Icon name="edit" size={16} />
+                        Edit
+                      </button>
+                    )}
+                    {editingTags && (
+                      <div className="tag-edit-actions">
+                        <button
+                          type="button"
+                          className="tag-cancel-btn"
+                          onClick={cancelEditTags}
+                          disabled={savingTags}
                         >
-                          {tag}
-                        </motion.span>
-                      ))}
-                    </AnimatePresence>
-                    {stage === 'tagging' && (
-                      <span className="tag tag-pending">…</span>
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          className="tag-save-btn"
+                          onClick={() => void saveTags()}
+                          disabled={savingTags}
+                        >
+                          {savingTags ? 'Saving…' : 'Save'}
+                        </button>
+                      </div>
                     )}
                   </div>
+
+                  {editingTags ? (
+                    <div className="upload-tag-cloud editing">
+                      {draftTags.map((tag, index) => (
+                        <span key={`${tag}-${index}`} className="tag primary editable">
+                          {tag}
+                          <button
+                            type="button"
+                            className="tag-remove"
+                            aria-label={`Remove ${tag}`}
+                            onClick={() => removeDraftTag(index)}
+                          >
+                            <Icon name="close" size={16} />
+                          </button>
+                        </span>
+                      ))}
+                      <input
+                        className="tag-add-input"
+                        value={newTag}
+                        maxLength={MAX_TAG_LEN}
+                        disabled={draftTags.length >= MAX_TAGS}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ',') {
+                            e.preventDefault();
+                            commitNewTag();
+                          } else if (
+                            e.key === 'Backspace' &&
+                            newTag === '' &&
+                            draftTags.length > 0
+                          ) {
+                            removeDraftTag(draftTags.length - 1);
+                          }
+                        }}
+                        placeholder={
+                          draftTags.length >= MAX_TAGS
+                            ? `Max ${MAX_TAGS} tags`
+                            : 'Add a tag'
+                        }
+                        aria-label="Add a tag"
+                      />
+                    </div>
+                  ) : (
+                    <div className="upload-tag-cloud">
+                      <AnimatePresence>
+                        {tags.map((tag) => (
+                          <motion.span
+                            key={tag}
+                            className="tag primary"
+                            initial={{ opacity: 0, y: 6, scale: 0.92 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.28 }}
+                          >
+                            {tag}
+                          </motion.span>
+                        ))}
+                      </AnimatePresence>
+                      {stage === 'tagging' && (
+                        <span className="tag tag-pending">…</span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {insight && (

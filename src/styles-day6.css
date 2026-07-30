@@ -373,6 +373,33 @@
   background: var(--panel-soft);
 }
 
+/* Reuse of the edit affordance on the Upload page's tag stream */
+.upload-tag-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.upload-tag-head h3 {
+  margin: 0;
+}
+.tag-edit-btn.small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.upload-tag-cloud.editing {
+  align-items: center;
+  gap: 8px;
+}
+/* Edit mode uses solid-green chips so the light remove control reads,
+   matching the AssetDetails editor exactly. */
+.upload-tag-cloud.editing .tag.primary {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+
 /* ─────────────────────────────────────────────────────────
    3. Responsive — mobile + tablet breakpoints
    ───────────────────────────────────────────────────────── */
