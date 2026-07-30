@@ -10,20 +10,18 @@ import { gridContainer, gridItem } from '../lib/motion';
 import type { Asset, AssetType } from '../types';
 import { toast } from '../stores/toast';
 
-type LibraryFilter = 'All' | 'Photos' | 'Illustrations' | 'Recent';
+type LibraryFilter = 'All' | 'Photos' | 'Recent';
 type SortKey = 'date' | 'name' | 'popular';
 type ViewMode = 'grid' | 'list';
 
 const filters: readonly LibraryFilter[] = [
   'All',
   'Photos',
-  'Illustrations',
   'Recent',
 ] as const;
 
 const filterToType: Partial<Record<LibraryFilter, AssetType>> = {
   Photos: 'PHOTO',
-  Illustrations: 'GRAPHIC',
 };
 
 const sortLabels: Record<SortKey, string> = {

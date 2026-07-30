@@ -79,7 +79,7 @@ export function AssetDetails() {
     );
   }
 
-  const typeLabel = asset.type === 'PHOTO' ? 'Photo' : 'Illustration';
+  const typeLabel = 'Photo';
 
   const details: ReadonlyArray<readonly [string, string]> = [
     ['Format', `${asset.format} · ${typeLabel}`],

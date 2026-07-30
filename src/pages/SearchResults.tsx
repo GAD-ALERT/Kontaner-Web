@@ -149,9 +149,6 @@ export function SearchResults() {
       </div>
 
       <div className="result-filter-row">
-        <select aria-label="Asset type" value={type} onChange={(event) => setFilter('type', event.target.value)}>
-          <option value="">All types</option><option value="PHOTO">Photos</option><option value="VIDEO">Videos</option><option value="GRAPHIC">Graphics</option><option value="3D">3D</option>
-        </select>
         <select aria-label="License tier" value={tier} onChange={(event) => setFilter('tier', event.target.value)}>
           <option value="all">All licenses</option><option value="free">Free</option><option value="premium">Premium</option>
         </select>

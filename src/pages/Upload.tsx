@@ -187,7 +187,7 @@ export function Upload() {
                 <input
                   ref={inputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,image/tiff,image/svg+xml,image/heic,image/heif"
+                  accept="image/jpeg,image/png,image/webp,image/tiff,image/heic,image/heif"
                   hidden
                   onChange={handleInputChange}
                 />
