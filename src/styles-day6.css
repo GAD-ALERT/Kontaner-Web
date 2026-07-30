@@ -253,6 +253,127 @@
 }
 
 /* ─────────────────────────────────────────────────────────
+   2b. Editable AI tags (owner only)
+   ───────────────────────────────────────────────────────── */
+.tag-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.tag-panel-head h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tag-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.tag-edit-btn:hover {
+  background: var(--green-soft);
+}
+.tag-edit-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+.tag-cancel-btn,
+.tag-save-btn {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid var(--line-strong);
+  transition: background 0.15s ease;
+}
+.tag-cancel-btn {
+  background: var(--panel);
+  color: var(--muted);
+}
+.tag-cancel-btn:hover {
+  background: var(--panel-soft);
+}
+.tag-save-btn {
+  background: var(--green);
+  color: white;
+  border-color: var(--green);
+}
+.tag-save-btn:hover {
+  background: var(--green-dark);
+}
+.tag-save-btn:disabled,
+.tag-cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.detail-tag-cloud.editing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.tag.editable {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+}
+.tag-remove {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.tag-remove:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+.tag-add-input {
+  min-width: 132px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  outline: 0;
+  transition: border-color 0.15s ease;
+}
+.tag-add-input::placeholder {
+  color: var(--faint);
+  font-weight: 500;
+}
+.tag-add-input:focus {
+  border-style: solid;
+  border-color: var(--green);
+}
+.tag-add-input:disabled {
+  opacity: 0.55;
+  cursor: default;
+  background: var(--panel-soft);
+}
+
+/* ─────────────────────────────────────────────────────────
    3. Responsive — mobile + tablet breakpoints
    ───────────────────────────────────────────────────────── */
 
