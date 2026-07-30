@@ -1010,3 +1010,209 @@
 .topbar-upload:focus-visible {
   border-radius: var(--r-md);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Creator profile page
+   ═══════════════════════════════════════════════════════════ */
+.creator-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.creator-banner {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.creator-banner-bg {
+  position: absolute;
+  inset: 0;
+  height: 140px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(0, 105, 76, 0.28), transparent 55%),
+    radial-gradient(circle at 88% 20%, rgba(33, 106, 169, 0.22), transparent 55%),
+    linear-gradient(180deg, var(--green-soft), transparent);
+}
+.creator-banner.tone-gold .creator-banner-bg {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(239, 185, 26, 0.3), transparent 55%),
+    linear-gradient(180deg, #fdf4d8, transparent);
+}
+.creator-banner.tone-red .creator-banner-bg {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(198, 58, 54, 0.24), transparent 55%),
+    linear-gradient(180deg, #fbe9e8, transparent);
+}
+.creator-banner-inner {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 22px;
+  padding: 72px 28px 26px;
+}
+
+.creator-avatar.xl {
+  width: 104px;
+  height: 104px;
+  font-size: 34px;
+  border: 4px solid var(--panel);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+.creator-avatar.xl img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.creator-identity {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 4px;
+}
+.creator-identity h1 {
+  margin: 0 0 8px;
+  font-size: 30px;
+  line-height: 1.1;
+}
+.creator-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.creator-meta-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.creator-meta-row .msr {
+  color: var(--green);
+}
+.creator-bio {
+  margin: 14px 0 0;
+  max-width: 68ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.creator-share {
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+/* Stats */
+.creator-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.creator-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 22px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.creator-stat .msr {
+  color: var(--green);
+}
+.creator-stat strong {
+  font-size: 26px;
+  line-height: 1.1;
+}
+.creator-stat span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Toolbar */
+.creator-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.creator-search {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.creator-search:focus-within {
+  border-color: var(--green);
+}
+.creator-search .msr {
+  color: var(--faint);
+  flex-shrink: 0;
+}
+.creator-search input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+}
+.creator-search-clear {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: var(--panel-muted);
+  color: var(--muted);
+  cursor: pointer;
+}
+.creator-toolbar select {
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.skeleton-block {
+  background: linear-gradient(
+    100deg,
+    var(--panel-muted) 30%,
+    var(--panel-soft) 50%,
+    var(--panel-muted) 70%
+  );
+  background-size: 200% 100%;
+  animation: creator-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes creator-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@media (max-width: 720px) {
+  .creator-banner-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 56px 20px 22px;
+  }
+  .creator-share { align-self: stretch; justify-content: center; }
+  .creator-stats { grid-template-columns: 1fr; }
+  .creator-identity h1 { font-size: 24px; }
+}
