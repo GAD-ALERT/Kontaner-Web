@@ -888,14 +888,18 @@ p {
   font-size: 14px;
 }
 
+/* Ranked results read strict left-to-right, top-to-bottom (DOM =
+   relevance order). A CSS grid preserves that order; the old
+   multi-column layout filled top-down per column and let the
+   browser balance heights, scattering the ranking. */
 .masonry-results {
-  columns: 3 310px;
-  column-gap: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
 }
 
 .result-card {
-  break-inside: avoid;
-  margin-bottom: 24px;
   border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
@@ -903,19 +907,7 @@ p {
 }
 
 .result-visual {
-  height: 320px;
-}
-
-.result-card:nth-child(2) .result-visual {
-  height: 320px;
-}
-
-.result-card:nth-child(3) .result-visual {
-  height: 455px;
-}
-
-.result-card:nth-child(4) .result-visual {
-  height: 180px;
+  height: 240px;
 }
 
 .result-card-body {

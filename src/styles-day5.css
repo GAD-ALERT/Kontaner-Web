@@ -102,15 +102,16 @@
   padding: 4px 9px;
   border-radius: 999px;
   background: rgba(0, 105, 76, 0.94);
-  color: white;
+  color: #fff;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.4px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
   backdrop-filter: blur(4px);
 }
-.match-badge svg {
-  color: #ffe07a;
+/* Keep the whole capsule — icon and score — crisp white on green. */
+.match-badge .msr {
+  color: #fff;
 }
 
 /* ---- Matched tag highlight ---- */
