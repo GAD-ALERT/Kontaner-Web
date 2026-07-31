@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { Icon } from '../components/Icon';
+import { AssetCard } from '../components/AssetCard';
 import { useCollections } from '../stores/collections';
 import { useFavorites } from '../stores/favorites';
 import { useNotifications } from '../stores/notifications';
@@ -22,7 +23,7 @@ const coverOptions: CollectionVisualClass[] = [
   'collection-urban',
 ];
 
-type WorkspaceTab = 'overview' | 'all-assets' | 'collections' | 'insights' | 'settings';
+type WorkspaceTab = 'overview' | 'all-assets' | 'collections' | 'favorites' | 'settings';
 
 interface SidebarItem {
   id: WorkspaceTab;
@@ -34,7 +35,7 @@ const sidebarItems: readonly SidebarItem[] = [
   { id: 'overview', label: 'Overview', icon: 'grid_view' },
   { id: 'all-assets', label: 'All Assets', icon: 'folder_open' },
   { id: 'collections', label: 'Collections', icon: 'label' },
-  { id: 'insights', label: 'AI Insights', icon: 'lightbulb' },
+  { id: 'favorites', label: 'Favorites', icon: 'bookmark' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
 
@@ -45,6 +46,7 @@ export function Collections() {
   const remove = useCollections((s) => s.remove);
   const rename = useCollections((s) => s.rename);
   const favorites = useFavorites((s) => s.ids);
+  const favoriteItems = useFavorites((s) => s.items);
   const uploads = useLibrary((s) => s.uploads);
   const pushNotif = useNotifications((s) => s.push);
 
@@ -341,63 +343,34 @@ export function Collections() {
             </>
           )}
 
-          {tab === 'insights' && (
+          {tab === 'favorites' && (
             <>
               <div className="collections-heading">
                 <div>
                   <h1>
-                    <Icon name="auto_awesome" size={24} />
-                    AI Insights
+                    <Icon name="bookmark" size={24} filled />
+                    Favorites
                   </h1>
-                  <p>What our engine notices about your library this week.</p>
+                  <p>Assets you've saved from across Kontaner, all in one place.</p>
                 </div>
               </div>
-              <div className="insights-stack">
-                <article className="insight-card">
-                  <h3>Your dominant theme</h3>
-                  <p>
-                    Across your saved assets, <strong>Kente patterns</strong> and{' '}
-                    <strong>Market scenes</strong> appear in{' '}
-                    {Math.max(1, totals.favorites)} of the assets you've engaged with.
-                    Consider grouping them into a single editorial set.
-                  </p>
-                  <button
-                    type="button"
-                    className="text-button"
-                    onClick={() => void (async () => {
-                      const created = await create({
-                        name: 'Kente & Market — Editorial',
-                        description: 'Suggested grouping based on your activity.',
-                        isPublic: false,
-                      });
-                      toast.success('Collection drafted from your patterns');
-                      navigate(`/collection/${created.id}`);
-                    })()}
-                  >
-                    <Icon name="add" size={16} /> Draft this collection
-                  </button>
-                </article>
-                <article className="insight-card">
-                  <h3>Colors you keep returning to</h3>
-                  <p>
-                    Warm gold and emerald run through {Math.max(60, totals.assets)}% of your
-                    library. Browse Discover to find more in this tonal range.
-                  </p>
-                  <Link to="/" className="text-button">
+              {favoriteItems.length === 0 ? (
+                <div className="collections-empty">
+                  <Icon name="bookmark" size={40} />
+                  <h2>No favorites yet</h2>
+                  <p>Tap the bookmark on any asset to save it here.</p>
+                  <Link to="/" className="primary-button compact">
+                    <Icon name="search" size={20} />
                     Browse Discover
                   </Link>
-                </article>
-                <article className="insight-card">
-                  <h3>Storage opportunity</h3>
-                  <p>
-                    You have {Math.max(0, totals.assets - totals.savedAssets)} assets with no collection assigned. Tagging them speeds up
-                    future searches and unlocks better recommendations.
-                  </p>
-                  <Link to="/library" className="text-button">
-                    Open library
-                  </Link>
-                </article>
-              </div>
+                </div>
+              ) : (
+                <div className="library-grid">
+                  {favoriteItems.map((asset) => (
+                    <AssetCard asset={asset} key={asset.id} />
+                  ))}
+                </div>
+              )}
             </>
           )}
         </motion.div>
