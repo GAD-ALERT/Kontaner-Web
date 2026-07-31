@@ -109,7 +109,13 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
   backdrop-filter: blur(4px);
 }
-/* Keep the whole capsule — icon and score — crisp white on green. */
+/* Keep the whole capsule — icon and score — crisp white on green.
+   The score is a bare text node, so its colour comes from the badge
+   element. `.result-card span` (0,1,1) would otherwise tint it grey,
+   so raise specificity to (0,2,1) to keep it white. */
+.result-card span.match-badge {
+  color: #fff;
+}
 .match-badge .msr {
   color: #fff;
 }
