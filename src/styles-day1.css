@@ -562,6 +562,13 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+.creator-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .creator-avatar.green { background: linear-gradient(140deg, var(--green), #04392a); }
 .creator-avatar.blue { background: linear-gradient(140deg, var(--blue), #0a3d6a); }
