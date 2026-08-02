@@ -4,6 +4,8 @@ import type { Collection, CollectionVisualClass } from '../types';
 
 export interface StoredCollection extends Collection {
   description: string; isPublic: boolean; assetIds: string[]; createdAt: number;
+  /** Up to four asset image URLs for the cover mosaic (newest first). */
+  coverImages?: string[];
 }
 
 interface CollectionsState {

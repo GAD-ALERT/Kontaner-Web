@@ -253,9 +253,16 @@ export function Collections() {
                         }}
                       >
                         <div className="collection-cover">
-                          {tiles.map((v, idx) => (
-                            <div key={`${v}-${idx}`} className={`collection-cover-tile ${v}`} />
-                          ))}
+                          {tiles.map((v, idx) => {
+                            const cover = collection.coverImages?.[idx];
+                            return cover ? (
+                              <div key={idx} className="collection-cover-tile">
+                                <img src={cover} alt="" loading="lazy" decoding="async" />
+                              </div>
+                            ) : (
+                              <div key={idx} className={`collection-cover-tile ${v}`} />
+                            );
+                          })}
                           <span
                             className="collection-privacy"
                             title={collection.isPublic ? 'Public' : 'Private'}
