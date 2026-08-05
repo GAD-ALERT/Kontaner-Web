@@ -16,6 +16,7 @@ import type { Asset, AssetResponse } from '../types';
 // so edits never round-trip into a 400.
 const MAX_TAGS = 40;
 const MAX_TAG_LEN = 80;
+const MAX_TITLE_LEN = 200;
 
 export function AssetDetails() {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +45,9 @@ export function AssetDetails() {
   const [draftTags, setDraftTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState<string>('');
   const [savingTags, setSavingTags] = useState<boolean>(false);
+  const [editingTitle, setEditingTitle] = useState<boolean>(false);
+  const [titleDraft, setTitleDraft] = useState<string>('');
+  const [savingTitle, setSavingTitle] = useState<boolean>(false);
 
   useEffect(() => {
     if (!id) return;
@@ -190,9 +194,42 @@ export function AssetDetails() {
     }
   };
 
-  // Tag edits persist through /uploads/:id, so only the asset's own
-  // uploader can refine its AI-generated tags.
-  const canEditTags = isAuthed && uploads.some((u) => u.id === asset.id);
+  // Edits persist through /uploads/:id, so only the asset's own uploader
+  // can rename it or refine its AI-generated tags.
+  const canEdit = isAuthed && uploads.some((u) => u.id === asset.id);
+  const canEditTags = canEdit;
+
+  const startEditTitle = (): void => {
+    setTitleDraft(asset.displayTitle);
+    setEditingTitle(true);
+  };
+
+  const cancelEditTitle = (): void => {
+    setEditingTitle(false);
+  };
+
+  const saveTitle = async (): Promise<void> => {
+    const next = titleDraft.trim().slice(0, MAX_TITLE_LEN);
+    if (!next) {
+      toast.warn('Title cannot be empty');
+      return;
+    }
+    if (next === asset.displayTitle) {
+      setEditingTitle(false);
+      return;
+    }
+    setSavingTitle(true);
+    try {
+      const updated = await updateUpload(asset.id, { displayTitle: next });
+      setAsset(updated);
+      setEditingTitle(false);
+      toast.success('Asset renamed');
+    } catch (err) {
+      toast.error('Could not rename', err instanceof Error ? err.message : undefined);
+    } finally {
+      setSavingTitle(false);
+    }
+  };
 
   const startEditTags = (): void => {
     setDraftTags(asset.tags);
@@ -312,7 +349,58 @@ export function AssetDetails() {
         </div>
 
         <aside className="detail-sidebar">
-          <h1>{asset.displayTitle}</h1>
+          {editingTitle ? (
+            <div className="title-edit">
+              <input
+                className="title-edit-input"
+                value={titleDraft}
+                maxLength={MAX_TITLE_LEN}
+                autoFocus
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    void saveTitle();
+                  } else if (e.key === 'Escape') {
+                    cancelEditTitle();
+                  }
+                }}
+                aria-label="Asset title"
+              />
+              <div className="title-edit-actions">
+                <button
+                  type="button"
+                  className="tag-cancel-btn"
+                  onClick={cancelEditTitle}
+                  disabled={savingTitle}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="tag-save-btn"
+                  onClick={() => void saveTitle()}
+                  disabled={savingTitle}
+                >
+                  {savingTitle ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="title-row">
+              <h1>{asset.displayTitle}</h1>
+              {canEdit && (
+                <button
+                  type="button"
+                  className="title-edit-btn"
+                  aria-label="Rename asset"
+                  onClick={startEditTitle}
+                >
+                  <Icon name="edit" size={20} />
+                </button>
+              )}
+            </div>
+          )}
           <p className="upload-meta">
             Uploaded by {asset.creatorId
               ? <Link to={`/creator/${asset.creatorId}`}>{asset.owner}</Link>

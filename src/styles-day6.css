@@ -373,6 +373,87 @@
   background: var(--panel-soft);
 }
 
+/* ─────────────────────────────────────────────────────────
+   2c. Rename (title edit) — shared by AssetDetails + Upload
+   ───────────────────────────────────────────────────────── */
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.title-row h1 {
+  margin: 0;
+}
+.title-edit-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.title-edit-btn:hover {
+  background: var(--panel-soft);
+  color: var(--green);
+}
+.title-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.title-edit-input {
+  flex: 1;
+  min-width: 180px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  padding: 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--panel);
+  outline: 0;
+}
+.title-edit-input:focus {
+  border-color: var(--green);
+}
+.title-edit-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+.detail-sidebar .title-row,
+.detail-sidebar .title-edit {
+  margin-bottom: 8px;
+}
+
+/* Upload done-state title */
+.upload-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.upload-title-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.upload-title .title-row strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.upload-title .title-edit-input {
+  font-size: 15px;
+}
+
 /* Reuse of the edit affordance on the Upload page's tag stream */
 .upload-tag-head {
   display: flex;
