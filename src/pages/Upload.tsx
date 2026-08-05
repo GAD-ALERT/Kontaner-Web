@@ -19,9 +19,10 @@ import type { UploadResponse } from '../types';
 type UploadStage = 'idle' | 'uploading' | 'processing' | 'tagging' | 'done';
 
 // Mirror the backend's PATCH /uploads/:id limits (updateUploadSchema)
-// so tag edits never round-trip into a 400.
+// so edits never round-trip into a 400.
 const MAX_TAGS = 40;
 const MAX_TAG_LEN = 80;
+const MAX_TITLE_LEN = 200;
 
 interface Step {
   n: number;
@@ -73,6 +74,10 @@ export function Upload() {
   const [draftTags, setDraftTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState<string>('');
   const [savingTags, setSavingTags] = useState<boolean>(false);
+  const [savedTitle, setSavedTitle] = useState<string>('');
+  const [editingTitle, setEditingTitle] = useState<boolean>(false);
+  const [titleDraft, setTitleDraft] = useState<string>('');
+  const [savingTitle, setSavingTitle] = useState<boolean>(false);
   const palette = useDominantColors(stage === 'done' ? previewUrl : undefined, 5);
 
   const recentUploads = uploads.length > 0
@@ -99,6 +104,9 @@ export function Upload() {
     setEditingTags(false);
     setDraftTags([]);
     setNewTag('');
+    setSavedTitle('');
+    setEditingTitle(false);
+    setTitleDraft('');
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl('');
     setFile(null);
@@ -162,6 +170,39 @@ export function Upload() {
     }
   };
 
+  const startEditTitle = (): void => {
+    setTitleDraft(savedTitle);
+    setEditingTitle(true);
+  };
+
+  const cancelEditTitle = (): void => {
+    setEditingTitle(false);
+  };
+
+  const saveTitle = async (): Promise<void> => {
+    if (!savedAssetId) return;
+    const next = titleDraft.trim().slice(0, MAX_TITLE_LEN);
+    if (!next) {
+      toast.warn('Title cannot be empty');
+      return;
+    }
+    if (next === savedTitle) {
+      setEditingTitle(false);
+      return;
+    }
+    setSavingTitle(true);
+    try {
+      const updated = await updateUpload(savedAssetId, { displayTitle: next });
+      setSavedTitle(updated.displayTitle);
+      setEditingTitle(false);
+      toast.success('Asset renamed');
+    } catch (err) {
+      toast.error('Could not rename', err instanceof Error ? err.message : undefined);
+    } finally {
+      setSavingTitle(false);
+    }
+  };
+
   const handleFile = async (next: File | undefined): Promise<void> => {
     if (!next) return;
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -199,6 +240,7 @@ export function Upload() {
       setInsight(result.insight);
       addUpload(result.asset);
       setSavedAssetId(result.asset.id);
+      setSavedTitle(result.asset.displayTitle);
       setStage('done');
       pushNotif({ tone: 'collection', title: `${result.asset.displayTitle} uploaded`, body: `Tagged with ${result.tags.slice(0, 3).join(', ')}.`, href: `/asset/${result.asset.id}` });
       toast.success('Upload complete');
@@ -311,6 +353,62 @@ export function Upload() {
                     }}
                   />
                 </div>
+
+                {stage === 'done' && savedAssetId && (
+                  <div className="upload-title">
+                    <span className="upload-title-label">Title</span>
+                    {editingTitle ? (
+                      <div className="title-edit">
+                        <input
+                          className="title-edit-input"
+                          value={titleDraft}
+                          maxLength={MAX_TITLE_LEN}
+                          autoFocus
+                          onChange={(e) => setTitleDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              void saveTitle();
+                            } else if (e.key === 'Escape') {
+                              cancelEditTitle();
+                            }
+                          }}
+                          aria-label="Asset title"
+                        />
+                        <div className="title-edit-actions">
+                          <button
+                            type="button"
+                            className="tag-cancel-btn"
+                            onClick={cancelEditTitle}
+                            disabled={savingTitle}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            className="tag-save-btn"
+                            onClick={() => void saveTitle()}
+                            disabled={savingTitle}
+                          >
+                            {savingTitle ? 'Saving…' : 'Save'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="title-row">
+                        <strong>{savedTitle}</strong>
+                        <button
+                          type="button"
+                          className="title-edit-btn"
+                          aria-label="Rename asset"
+                          onClick={startEditTitle}
+                        >
+                          <Icon name="edit" size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="upload-process-meta">
                   <strong>{file?.name}</strong>
